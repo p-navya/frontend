@@ -1,7 +1,9 @@
 import React from 'react'
 import Home from '../Pages/Home'
 import Login from '../Pages/Login'
-import Dashboard from '../Pages/Dashboard'
+import UserDashboard from '../Pages/UserDashboard'
+import AdminDashboard from '../Pages/AdminDashboard'
+import MentorDashboard from '../Pages/MentorDashboard'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
@@ -39,13 +41,26 @@ const PublicRoute = ({ children, redirectIfAuth = true }) => {
   return children
 }
 
+// Role-based dashboard component
+const RoleBasedDashboard = () => {
+  const { user } = useAuth()
+
+  if (user?.role === 'admin') {
+    return <AdminDashboard />
+  } else if (user?.role === 'mentor') {
+    return <MentorDashboard />
+  } else {
+    return <UserDashboard />
+  }
+}
+
 function Routers() {
   return (
     <div>
         <Routes>
             <Route path='/' element={<Home />} />
             <Route path='/login' element={<PublicRoute><Login /></PublicRoute>} />
-            <Route path='/dashboard' element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path='/dashboard' element={<ProtectedRoute><RoleBasedDashboard /></ProtectedRoute>} />
             <Route path='*' element={<Navigate to="/" replace />} />
         </Routes>
     </div>

@@ -38,7 +38,7 @@ function Login() {
       })
 
       if (response.success) {
-        setAuth(response.data.user, response.data.token)
+        setAuth(response.data.user, response.data.token, response.data.firstLogin || false)
         navigate('/dashboard')
       }
     } catch (err) {
@@ -62,7 +62,7 @@ function Login() {
       })
 
       if (response.success) {
-        setAuth(response.data.user, response.data.token)
+        setAuth(response.data.user, response.data.token, false)
         navigate('/dashboard')
       }
     } catch (err) {

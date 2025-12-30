@@ -29,17 +29,13 @@ export const apiRequest = async (endpoint, options = {}) => {
     ...options,
   };
 
-  try {
-    const response = await fetch(`${API_URL}${endpoint}`, config);
-    const data = await response.json();
+  const response = await fetch(`${API_URL}${endpoint}`, config);
+  const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Something went wrong');
-    }
-
-    return data;
-  } catch (error) {
-    throw error;
+  if (!response.ok) {
+    throw new Error(data.message || 'Something went wrong');
   }
+
+  return data;
 };
 
