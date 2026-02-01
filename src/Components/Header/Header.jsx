@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Brain } from 'lucide-react'
+import { GraduationCap, Brain } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 function Header() {
@@ -18,22 +18,32 @@ function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Brain className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-green-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform relative">
+              <GraduationCap className="w-6 h-6 text-white z-10" />
+              <Brain className="w-3 h-3 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              StudyBuddy AI
+            <span className="text-2xl font-bold text-gray-800">
+              StudyBuddyAI
             </span>
           </Link>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-8">
-            <Link to="/" className="text-gray-700 hover:text-purple-600 font-medium transition-colors">
-              Home
+            <Link to="/#features" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">
+              Features
+            </Link>
+            <Link to="/#how-it-works" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">
+              How It Works
+            </Link>
+            <Link to="/#resources" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">
+              Resources
+            </Link>
+            <Link to="/#pricing" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">
+              Pricing
             </Link>
             {isAuthenticated ? (
               <>
-                <Link to="/dashboard" className="text-gray-700 hover:text-purple-600 font-medium transition-colors">
+                <Link to="/dashboard" className="text-gray-700 hover:text-teal-600 font-medium transition-colors">
                   Dashboard
                 </Link>
                 <button
@@ -44,12 +54,20 @@ function Header() {
                 </button>
               </>
             ) : (
-              <Link
-                to="/login"
-                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full hover:from-purple-700 hover:to-pink-700 transition-all font-medium shadow-lg"
-              >
-                Sign In
-              </Link>
+              <>
+                <Link
+                  to="/login"
+                  className="px-6 py-2 bg-white text-gray-700 rounded-full hover:bg-gray-50 transition-all font-medium border-2 border-gray-200"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/login"
+                  className="px-6 py-2 bg-gradient-to-r from-teal-500 to-green-500 text-white rounded-full hover:from-teal-600 hover:to-green-600 transition-all font-medium shadow-lg"
+                >
+                  Get Started
+                </Link>
+              </>
             )}
           </nav>
 
@@ -65,9 +83,9 @@ function Header() {
             ) : (
               <Link
                 to="/login"
-                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full text-sm font-medium"
+                className="px-4 py-2 bg-gradient-to-r from-teal-500 to-green-500 text-white rounded-full text-sm font-medium"
               >
-                Sign In
+                Get Started
               </Link>
             )}
           </div>

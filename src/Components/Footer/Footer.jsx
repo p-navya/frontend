@@ -1,74 +1,129 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Brain, Github, Linkedin, Mail } from 'lucide-react'
+import { GraduationCap, Twitter, Linkedin, Github, Mail } from 'lucide-react'
 
-function Footer() {
+const Footer = () => {
+  const footerLinks = {
+    product: [
+      { label: "Mental Health", href: "#modules" },
+      { label: "Career Guidance", href: "#modules" },
+      { label: "Academic Resources", href: "#modules" },
+      { label: "Pricing", href: "#" },
+    ],
+    company: [
+      { label: "About Us", href: "#" },
+      { label: "Careers", href: "#" },
+      { label: "Blog", href: "#" },
+      { label: "Contact", href: "#" },
+    ],
+    resources: [
+      { label: "Documentation", href: "#" },
+      { label: "Help Center", href: "#" },
+      { label: "Community", href: "#" },
+      { label: "Status", href: "#" },
+    ],
+    legal: [
+      { label: "Privacy Policy", href: "#" },
+      { label: "Terms of Service", href: "#" },
+      { label: "FERPA Compliance", href: "#" },
+    ],
+  }
+
   return (
-    <footer className="bg-gray-900 text-gray-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand */}
-          <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
-                <Brain className="w-6 h-6 text-white" />
+    <footer className="bg-white border-t border-gray-200">
+      <div className="container mx-auto px-4 py-4 md:py-6 pl-6 md:pl-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          {/* Brand column */}
+          <div className="col-span-2 md:col-span-1">
+            <Link to="/" className="flex items-center gap-2 mb-1.5">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-r from-teal-500 to-green-500 flex items-center justify-center">
+                <GraduationCap className="w-3.5 h-3.5 text-white" />
               </div>
-              <span className="text-2xl font-bold text-white">StudyBuddy AI</span>
-            </div>
-            <p className="text-gray-400 mb-4 max-w-md">
-              Your holistic AI-powered digital companion for academic success, career growth, and mental well-being.
+              <span className="font-bold text-sm text-gray-900">
+                StudyBuddy<span className="text-teal-600">AI</span>
+              </span>
+            </Link>
+            <p className="text-xs text-gray-600 mb-1.5 leading-tight">
+              Your AI-powered companion for academic success, career growth, and mental wellness.
             </p>
-            <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <Github className="w-5 h-5" />
+            <div className="flex gap-1">
+              <a href="#" className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-200 transition-colors">
+                <Twitter className="w-3 h-3" />
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <Linkedin className="w-5 h-5" />
+              <a href="#" className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-200 transition-colors">
+                <Linkedin className="w-3 h-3" />
               </a>
-              <a href="#" className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center hover:bg-gray-700 transition-colors">
-                <Mail className="w-5 h-5" />
+              <a href="#" className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-200 transition-colors">
+                <Github className="w-3 h-3" />
+              </a>
+              <a href="#" className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:text-gray-900 hover:bg-gray-200 transition-colors">
+                <Mail className="w-3 h-3" />
               </a>
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Links columns */}
           <div>
-            <h3 className="text-white font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link to="/" className="hover:text-white transition-colors">Home</Link>
-              </li>
-              <li>
-                <Link to="/login" className="hover:text-white transition-colors">Sign In</Link>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">About</a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">Features</a>
-              </li>
+            <h4 className="font-semibold text-gray-900 mb-2 text-xs">Product</h4>
+            <ul className="space-y-0.5">
+              {footerLinks.product.map((link) => (
+                <li key={link.label}>
+                  <a href={link.href} className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Modules */}
           <div>
-            <h3 className="text-white font-semibold mb-4">Modules</h3>
-            <ul className="space-y-2">
-              <li>
-                <a href="#" className="hover:text-white transition-colors">Mental Health</a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">Career Guidance</a>
-              </li>
-              <li>
-                <a href="#" className="hover:text-white transition-colors">Academic Resources</a>
-              </li>
+            <h4 className="font-semibold text-gray-900 mb-2 text-xs">Company</h4>
+            <ul className="space-y-0.5">
+              {footerLinks.company.map((link) => (
+                <li key={link.label}>
+                  <a href={link.href} className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-2 text-xs">Resources</h4>
+            <ul className="space-y-0.5">
+              {footerLinks.resources.map((link) => (
+                <li key={link.label}>
+                  <a href={link.href} className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-2 text-xs">Legal</h4>
+            <ul className="space-y-0.5">
+              {footerLinks.legal.map((link) => (
+                <li key={link.label}>
+                  <a href={link.href} className="text-xs text-gray-600 hover:text-gray-900 transition-colors">
+                    {link.label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
-          <p>&copy; {new Date().getFullYear()} StudyBuddy AI Platform. All rights reserved.</p>
+        {/* Bottom bar */}
+        <div className="mt-4 pt-3 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-2">
+          <p className="text-xs text-gray-600">
+            © {new Date().getFullYear()} StudyBuddy AI. All rights reserved.
+          </p>
+          <p className="text-xs text-gray-600 ml-auto mr-8 md:mr-12">
+            Made with care for students everywhere.
+          </p>
         </div>
       </div>
     </footer>

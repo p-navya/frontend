@@ -7,14 +7,15 @@ import { BrowserRouter as Router, useLocation } from 'react-router-dom'
 function LayoutContent() {
     const location = useLocation()
     const isLoginPage = location.pathname === '/login'
+    const isHomePage = location.pathname === '/'
 
     return (
         <>
-            {!isLoginPage && <Header />}
+            {!isLoginPage && !isHomePage && <Header />}
             <div>
                 <Routers />
             </div>
-            {!isLoginPage && <Footer />}
+            {!isLoginPage && !isHomePage && <Footer />}
         </>
     )
 }

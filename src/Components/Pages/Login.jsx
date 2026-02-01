@@ -62,8 +62,15 @@ function Login() {
       })
 
       if (response.success) {
-        setAuth(response.data.user, response.data.token, false)
-        navigate('/dashboard')
+        // Save email before resetting form
+        const registeredEmail = signUpForm.email
+        // Reset sign up form
+        setSignUpForm({ name: '', email: '', password: '' })
+        // Flip to sign in page
+        setIsFlipped(false)
+        setError('')
+        // Pre-fill email in sign in form
+        setSignInForm({ email: registeredEmail, password: '' })
       }
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.')
@@ -90,7 +97,7 @@ function Login() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200 p-4"
+      className="min-h-screen flex items-center justify-center bg-sky-50 p-4"
       style={{ perspective: '1000px' }}
     >
       <div className="relative w-full max-w-3xl h-[500px]">
@@ -107,7 +114,7 @@ function Login() {
               {/* SIGN IN */}
               <div className="w-1/2 bg-white flex flex-col items-center justify-center px-12">
                 <h1 className="text-5xl font-bold mb-6">Sign In</h1>
-                
+
                 {/* Social Login Buttons */}
                 <div className="flex gap-3 mb-6">
                   {/* Google */}
@@ -139,7 +146,7 @@ function Login() {
                     </svg>
                   </button>
                   {/* GitHub */}
-                  <button
+              <button
                     type="button"
                     className="w-12 h-12 rounded-lg border-2 border-gray-300 bg-white flex items-center justify-center hover:border-gray-400 transition-colors"
                   >
@@ -155,9 +162,9 @@ function Login() {
                         clipRule="evenodd"
                       />
                     </svg>
-                  </button>
+              </button>
                   {/* LinkedIn */}
-                  <button
+              <button
                     type="button"
                     className="w-12 h-12 rounded-lg border-2 border-gray-300 bg-white flex items-center justify-center hover:border-gray-400 transition-colors"
                   >
@@ -170,8 +177,8 @@ function Login() {
                       <path d="M20.447 20.452H17.21V14.86c0-1.332-.027-3.046-1.858-3.046-1.86 0-2.144 1.45-2.144 2.948v5.69H9.006V9h3.112v1.561h.045c.434-.822 1.494-1.69 3.073-1.69 3.287 0 3.893 2.164 3.893 4.977v6.604z" />
                       <path d="M5.337 7.433a1.804 1.804 0 1 1 0-3.608 1.804 1.804 0 0 1 0 3.608zM6.777 20.452H3.894V9h2.883v11.452z" />
                     </svg>
-                  </button>
-                </div>
+              </button>
+            </div>
 
                 <p className="text-gray-600 mb-8">or use your email password</p>
 
@@ -193,11 +200,11 @@ function Login() {
                       onChange={handleSignInChange}
                       placeholder="Email"
                       required
-                      className="w-full h-14 pl-10 pr-4 rounded-full bg-blue-50
+                      className="w-full h-14 pl-10 pr-4 rounded-full bg-sky-50
                       text-gray-800 placeholder-gray-500
-                      focus:outline-none focus:bg-blue-100 transition"
+                      focus:outline-none focus:bg-sky-100 transition"
                     />
-                  </div>
+                    </div>
 
                   {/* PASSWORD */}
                   <div className="relative w-4/5">
@@ -209,9 +216,9 @@ function Login() {
                       onChange={handleSignInChange}
                       placeholder="Password"
                       required
-                      className="w-full h-14 pl-10 pr-10 rounded-full bg-blue-50
+                      className="w-full h-14 pl-10 pr-10 rounded-full bg-sky-50
                       text-gray-800 placeholder-gray-500
-                      focus:outline-none focus:bg-blue-100 transition"
+                      focus:outline-none focus:bg-sky-100 transition"
                     />
                     <Eye className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 cursor-pointer z-10" />
                   </div>
@@ -223,22 +230,22 @@ function Login() {
                   <button 
                     type="submit"
                     disabled={loading}
-                    className="w-4/5 h-12 bg-purple-700 text-white rounded-full font-semibold hover:bg-purple-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-4/5 h-12 bg-gradient-to-r from-sky-400 to-green-400 text-white rounded-full font-semibold hover:from-sky-500 hover:to-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'SIGNING IN...' : 'SIGN IN'}
                   </button>
                 </form>
-              </div>
+                </div>
 
               {/* RIGHT PANEL */}
-              <div className="w-1/2 bg-purple-700 flex flex-col items-center justify-center text-white px-12">
+              <div className="w-1/2 bg-gradient-to-r from-sky-400 to-green-400 flex flex-col items-center justify-center text-white px-12">
                 <h1 className="text-5xl font-bold mb-6">Hello, Friend!</h1>
                 <p className="text-center mb-8">
                   Register with your personal details to use all site features
                 </p>
                 <button
                   onClick={() => setIsFlipped(true)}
-                  className="px-8 py-3 border-2 rounded-full hover:bg-white hover:text-purple-700 transition"
+                  className="px-8 py-3 border-2 rounded-full hover:bg-white hover:text-sky-500 transition"
                 >
                   SIGN UP
                 </button>
@@ -261,14 +268,14 @@ function Login() {
                 )}
 
                 <form onSubmit={handleSignUp} className="w-full flex flex-col items-center gap-4">
-                  <input 
+                  <input
                     type="text" 
                     name="name"
                     value={signUpForm.name}
                     onChange={handleSignUpChange}
                     placeholder="Name"
                     required
-                    className="w-4/5 h-14 px-6 rounded-full bg-blue-50 focus:outline-none focus:bg-blue-100 transition" 
+                    className="w-4/5 h-14 px-6 rounded-full bg-sky-50 focus:outline-none focus:bg-sky-100 transition" 
                   />
                   <input 
                     type="email" 
@@ -277,22 +284,22 @@ function Login() {
                     onChange={handleSignUpChange}
                     placeholder="Email"
                     required
-                    className="w-4/5 h-14 px-6 rounded-full bg-blue-50 focus:outline-none focus:bg-blue-100 transition" 
+                    className="w-4/5 h-14 px-6 rounded-full bg-sky-50 focus:outline-none focus:bg-sky-100 transition" 
                   />
-                  <input 
-                    type="password" 
+                  <input
+                    type="password"
                     name="password"
                     value={signUpForm.password}
                     onChange={handleSignUpChange}
                     placeholder="Password"
                     required
-                    className="w-4/5 h-14 px-6 rounded-full bg-blue-50 focus:outline-none focus:bg-blue-100 transition" 
+                    className="w-4/5 h-14 px-6 rounded-full bg-sky-50 focus:outline-none focus:bg-sky-100 transition" 
                   />
 
                   <button 
                     type="submit"
                     disabled={loading}
-                    className="w-4/5 h-12 bg-purple-700 text-white rounded-full font-semibold hover:bg-purple-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-4/5 h-12 bg-gradient-to-r from-sky-400 to-green-400 text-white rounded-full font-semibold hover:from-sky-500 hover:to-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'SIGNING UP...' : 'SIGN UP'}
                   </button>
@@ -300,17 +307,17 @@ function Login() {
               </div>
 
               {/* WELCOME BACK */}
-              <div className="w-1/2 bg-purple-900 flex flex-col items-center justify-center text-white px-12">
+              <div className="w-1/2 bg-gradient-to-r from-sky-500 to-green-500 flex flex-col items-center justify-center text-white px-12">
                 <h1 className="text-5xl font-bold mb-6">Welcome Back!</h1>
                 <p className="mb-8 text-center">
                   Enter your personal details to use all site features
                 </p>
-                <button
+              <button
                   onClick={() => setIsFlipped(false)}
-                  className="px-8 py-3 border-2 rounded-full hover:bg-white hover:text-purple-700 transition"
-                >
+                  className="px-8 py-3 border-2 rounded-full hover:bg-white hover:text-sky-500 transition"
+              >
                   SIGN IN
-                </button>
+              </button>
               </div>
             </div>
           </div>

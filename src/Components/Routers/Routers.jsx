@@ -4,6 +4,7 @@ import Login from '../Pages/Login'
 import UserDashboard from '../Pages/UserDashboard'
 import AdminDashboard from '../Pages/AdminDashboard'
 import MentorDashboard from '../Pages/MentorDashboard'
+import ChatPage from '../Pages/ChatPage'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
@@ -57,12 +58,13 @@ const RoleBasedDashboard = () => {
 function Routers() {
   return (
     <div>
-        <Routes>
-            <Route path='/' element={<Home />} />
-            <Route path='/login' element={<PublicRoute><Login /></PublicRoute>} />
-            <Route path='/dashboard' element={<ProtectedRoute><RoleBasedDashboard /></ProtectedRoute>} />
-            <Route path='*' element={<Navigate to="/" replace />} />
-        </Routes>
+      <Routes>
+        <Route path='/' element={<Home />} />
+        <Route path='/login' element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path='/dashboard' element={<ProtectedRoute><RoleBasedDashboard /></ProtectedRoute>} />
+        <Route path='/chat' element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+        <Route path='*' element={<Navigate to="/" replace />} />
+      </Routes>
     </div>
   )
 }
