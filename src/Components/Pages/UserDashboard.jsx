@@ -1,14 +1,36 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { GraduationCap, BookOpen, Users, Award, Heart, FileText, Send, Paperclip, Bot, X } from 'lucide-react'
+import { GraduationCap, BookOpen, Users, Award, Heart, FileText, Send, Paperclip, Bot, X, ChevronRight, Play, Edit, Clock, Check } from 'lucide-react'
 import { sendChatMessage } from '../../services/chatbotService'
 
 import { useNavigate } from 'react-router-dom'
 
 function UserDashboard() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('overview') // 'overview', 'mental-support', 'resume-builder', 'student-helper'
+  const calculateStats = () => {
+    const myGroups = JSON.parse(localStorage.getItem('studybuddy_my_groups') || '[]');
+    const history = JSON.parse(localStorage.getItem('studybuddy_achievements') || '[]');
+    const totalXP = history.reduce((sum, item) => sum + item.xp, 0);
+    return {
+      groups: myGroups.length,
+      achievements: history.length,
+      score: totalXP
+    };
+  };
+
+  const [activeTab, setActiveTab] = useState('overview')
+  const [stats, setStats] = useState(calculateStats())
+
+  useEffect(() => {
+    const handleStorageChange = () => setStats(calculateStats());
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('focus', handleStorageChange); // Also update on focus
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', handleStorageChange);
+    };
+  }, []);
   const [mentalSupportMessages, setMentalSupportMessages] = useState([])
   const [resumeBuilderMessages, setResumeBuilderMessages] = useState([])
   const [studentHelperMessages, setStudentHelperMessages] = useState([])
@@ -20,11 +42,7 @@ function UserDashboard() {
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
-  const features = [
-    { icon: Bot, label: 'Study Buddy', value: 'Ready', color: 'bg-indigo-500' },
-    { icon: Users, label: 'Study Groups', value: '0', color: 'bg-green-500' },
-    { icon: Award, label: 'Achievements', value: '0', color: 'bg-purple-500' }
-  ]
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -108,34 +126,49 @@ function UserDashboard() {
     }
   }
 
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (hour < 12) return 'Good Morning'
+    if (hour < 18) return 'Good Afternoon'
+    return 'Good Evening'
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6 md:p-8">
+    <div className="min-h-screen bg-linear-to-br from-indigo-100 via-purple-100 to-pink-100 pt-24 pb-6 px-6 md:px-8 md:pt-28">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Student Dashboard</h1>
-            <p className="text-gray-600">Welcome back, {user?.name || 'Student'}!</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">{getGreeting()}, {user?.name || 'Student'}!</h1>
+            <p className="text-gray-600">Welcome to your Student Dashboard</p>
           </div>
-          <button
-            onClick={logout}
-            className="px-6 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition"
-          >
-            Logout
-          </button>
         </div>
+
 
         {/* Tab Navigation */}
         <div className="flex overflow-x-auto pb-2 gap-2 mb-6 border-b border-gray-200">
           {[
             { id: 'overview', label: 'Overview' },
-            { id: 'mental-support', label: 'Mental Support' },
-            { id: 'resume-builder', label: 'Resume Builder' },
-            // { id: 'student-helper', label: 'Study Helper' } // Moved to separate page
+            { id: 'study-helper', label: 'Study Helper' },
+            { id: 'resume-builder', label: 'Resume Architect' },
+            { id: 'resources', label: 'Resource Hub' },
+            { id: 'wellness', label: 'Wellness' },
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                if (tab.id === 'study-helper') {
+                  navigate('/chat')
+                } else if (tab.id === 'resume-builder') {
+                  navigate('/resume')
+                } else if (tab.id === 'resources') {
+                  navigate('/resources')
+                } else if (tab.id === 'wellness') {
+                  navigate('/wellness')
+                } else {
+                  setActiveTab(tab.id)
+                }
+              }}
               className={`px-4 md:px-6 py-3 font-semibold transition whitespace-nowrap ${activeTab === tab.id
                 ? 'text-purple-700 border-b-2 border-purple-700'
                 : 'text-gray-600 hover:text-gray-800'
@@ -148,87 +181,256 @@ function UserDashboard() {
 
         {/* Tab Content */}
         {activeTab === 'overview' && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              {features.map((feature, index) => (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 bg-white/20 backdrop-blur-sm p-4 rounded-4xl border border-white/20">
+
+              {/* Left Column - Chat & Actionable */}
+              <div className="md:col-span-3 flex flex-col gap-6">
+                {/* Chat / Study Helper Widget */}
                 <div
-                  key={index}
-                  className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all"
+                  onClick={() => navigate('/chat')}
+                  className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-indigo-200/50 hover:shadow-2xl hover:shadow-indigo-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer relative overflow-hidden group h-64 flex flex-col justify-between"
                 >
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className={`w-12 h-12 ${feature.color} rounded-xl flex items-center justify-center`}>
-                      <feature.icon className="w-6 h-6 text-white" />
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+                      <Bot className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-gray-800">{feature.label}</h3>
+                      <h3 className="font-bold text-gray-800">Study Helper</h3>
+                      <p className="text-xs text-gray-500">Ask a question...</p>
                     </div>
                   </div>
-                  <p className="text-3xl font-bold text-gray-800">{feature.value}</p>
+                  <div className="space-y-3">
+                    <div className="bg-gray-50 p-3 rounded-t-2xl rounded-br-2xl text-xs text-gray-600">
+                      Can you explain the theory of relativity?
+                    </div>
+                    <div className="bg-indigo-50 p-3 rounded-t-2xl rounded-bl-2xl text-xs text-indigo-700 ml-auto max-w-[90%]">
+                      Sure! It essentially states that...
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-2 text-indigo-600 text-xs font-bold group-hover:gap-3 transition-all">
+                    Continue Chatting <ChevronRight className="w-3 h-3" />
+                  </div>
                 </div>
-              ))}
+
+                {/* Resume Architect Widget */}
+                <div
+                  onClick={() => navigate('/resume')}
+                  className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-teal-200/50 hover:shadow-2xl hover:shadow-teal-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 bg-teal-100 rounded-2xl text-teal-600">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                    <div className="bg-teal-50 text-teal-700 text-xs font-bold px-2 py-1 rounded-full">New</div>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-800 mb-1">Resume Architect</h3>
+                  <p className="text-xs text-gray-500 mb-4">Build professional resumes with AI assistance.</p>
+                  <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2 overflow-hidden">
+                    <div className="bg-teal-500 h-full w-3/4 rounded-full"></div>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>Profile Strength</span>
+                    <span>75%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Middle Column - Stats & Activity */}
+              <div className="md:col-span-6 flex flex-col gap-6">
+
+                {/* Top Row Stats */}
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Study Groups Stat */}
+                  <div
+                    onClick={() => navigate('/study-groups')}
+                    className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-green-200/50 hover:shadow-2xl hover:shadow-green-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer relative overflow-hidden"
+                  >
+                    <h3 className="text-gray-500 text-sm font-medium mb-1">Study Groups</h3>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-extrabold text-gray-800">{stats.groups}</span>
+                      <span className="text-xs text-green-500 font-bold bg-green-50 px-1.5 py-0.5 rounded-full">Active</span>
+                    </div>
+
+                    {/* Mini Line Chart Visualization */}
+                    <div className="mt-4 h-12 flex items-end gap-1 opacity-50">
+                      <div className="w-1/5 bg-green-200 h-[40%] rounded-t-sm"></div>
+                      <div className="w-1/5 bg-green-300 h-[70%] rounded-t-sm"></div>
+                      <div className="w-1/5 bg-green-400 h-[50%] rounded-t-sm"></div>
+                      <div className="w-1/5 bg-green-500 h-[90%] rounded-t-sm"></div>
+                      <div className="w-1/5 bg-green-600 h-[60%] rounded-t-sm"></div>
+                    </div>
+                  </div>
+
+                  {/* Achievements Stat */}
+                  <div
+                    onClick={() => navigate('/achievements')}
+                    className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl hover:shadow-purple-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer relative overflow-hidden"
+                  >
+                    <h3 className="text-gray-500 text-sm font-medium mb-1">Achievements</h3>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-extrabold text-gray-800">{stats.achievements}</span>
+                      <span className="text-xs text-purple-500 font-bold bg-purple-50 px-1.5 py-0.5 rounded-full">Tests</span>
+                    </div>
+                    <div className="mt-2 text-sm font-bold text-gray-400">
+                      Score: <span className="text-purple-600">{stats.score} XP</span>
+                    </div>
+
+                    {/* Mini Progress Circle */}
+                    <div className="absolute right-4 bottom-4 w-12 h-12 rounded-full border-4 border-purple-100 border-t-purple-500 flex items-center justify-center">
+                      <Award className="w-5 h-5 text-purple-500" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Activity Hours Chart */}
+                <div className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-orange-200/50 hover:shadow-2xl hover:shadow-orange-200/40 transition-all duration-300 flex-1 min-h-[200px]">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="font-bold text-gray-800 text-lg">Activity Hours</h3>
+                    <select className="bg-gray-50 border-none text-xs text-gray-500 rounded-lg px-2 py-1 outline-none font-medium">
+                      <option>Weekly</option>
+                      <option>Monthly</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end justify-between h-40 gap-2 md:gap-4 px-2">
+                    {/* Mock Bars */}
+                    {[35, 55, 40, 70, 50, 65, 45].map((h, i) => (
+                      <div key={i} className="flex flex-col items-center gap-2 w-full">
+                        <div
+                          className="w-full max-w-[24px] bg-orange-100 rounded-full relative group transition-all hover:bg-orange-200"
+                          style={{ height: '100%' }}
+                        >
+                          <div
+                            className="absolute bottom-0 w-full bg-orange-400 rounded-full transition-all group-hover:bg-orange-500"
+                            style={{ height: `${h}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-[10px] uppercase font-bold text-gray-400">{['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Today's Classes / Schedule */}
+                <div className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-blue-200/50 hover:shadow-2xl hover:shadow-blue-200/40 transition-all duration-300">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-gray-800">Today's Schedule</h3>
+                    <button className="p-1 hover:bg-gray-100 rounded-full"><ChevronRight className="w-4 h-4 text-gray-400" /></button>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-4 p-3 hover:bg-white hover:shadow-md rounded-2xl transition-all duration-300 group cursor-pointer border border-transparent hover:border-blue-100">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">10</div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-gray-800 text-sm">Physics Mechanics</h4>
+                        <p className="text-xs text-gray-500">10:00 AM - 11:30 AM</p>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm group-hover:bg-blue-500 group-hover:text-white transition">
+                        <Play className="w-3 h-3 ml-0.5 fill-current" />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-2xl transition group cursor-pointer">
+                      <div className="w-12 h-12 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center font-bold">12</div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-gray-800 text-sm">Design Principles</h4>
+                        <p className="text-xs text-gray-500">12:00 PM - 01:30 PM</p>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm group-hover:bg-pink-500 group-hover:text-white transition">
+                        <Play className="w-3 h-3 ml-0.5 fill-current" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column - Profile & Calendar */}
+              <div className="md:col-span-3 flex flex-col gap-6">
+
+                {/* Profile Card */}
+                <div className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-blue-200/50 hover:shadow-2xl hover:shadow-blue-200/40 transition-all duration-300 text-center relative">
+                  <button className="absolute top-6 right-6 p-2 bg-white/50 rounded-full hover:bg-white text-gray-400 backdrop-blur-sm"><Edit className="w-3 h-3" /></button>
+                  <div className="w-20 h-20 bg-gray-900 rounded-full mx-auto mb-4 p-1 border-2 border-dashed border-gray-300">
+                    <div className="w-full h-full bg-gray-800 rounded-full flex items-center justify-center text-2xl">👨‍🎓</div>
+                  </div>
+                  <h2 className="text-lg font-bold text-gray-800">{user?.name || 'Student'}</h2>
+                  <p className="text-xs text-gray-500 mb-6">@{user?.email?.split('@')[0] || 'username'}</p>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="bg-purple-50 p-2 rounded-2xl">
+                      <Clock className="w-4 h-4 text-purple-500 mx-auto mb-1" />
+                      <div className="text-xs font-bold text-gray-700">78h</div>
+                    </div>
+                    <div className="bg-orange-50 p-2 rounded-2xl">
+                      <FileText className="w-4 h-4 text-orange-500 mx-auto mb-1" />
+                      <div className="text-xs font-bold text-gray-700">4</div>
+                    </div>
+                    <div className="bg-green-50 p-2 rounded-2xl">
+                      <Check className="w-4 h-4 text-green-500 mx-auto mb-1" />
+                      <div className="text-xs font-bold text-gray-700">{stats.achievements}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resource Hub Link (styled as Total Courses) */}
+                <div
+                  onClick={() => navigate('/resources')}
+                  className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-pink-200/50 hover:shadow-2xl hover:shadow-pink-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer"
+                >
+                  <h3 className="text-gray-500 text-sm font-medium mb-3">Resource Hub</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-4xl font-extrabold text-gray-800">20+</span>
+                    <div className="flex gap-1">
+                      <div className="w-2 h-8 bg-pink-400 rounded-full opacity-60"></div>
+                      <div className="w-2 h-6 bg-purple-400 rounded-full opacity-60"></div>
+                      <div className="w-2 h-10 bg-indigo-400 rounded-full opacity-60"></div>
+                      <div className="w-2 h-5 bg-blue-400 rounded-full opacity-60"></div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400">Access semester materials</p>
+                </div>
+
+                {/* Wellness / Calendar Widget */}
+                <div className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-rose-200/50 hover:shadow-2xl hover:shadow-rose-200/40 transition-all duration-300 flex-1">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-gray-800">December</h3>
+                    <div className="flex gap-2">
+                      <button className="p-1 hover:bg-gray-50 rounded-full"><ChevronRight className="w-3 h-3 rotate-180" /></button>
+                      <button className="p-1 hover:bg-gray-50 rounded-full"><ChevronRight className="w-3 h-3" /></button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1 text-center text-xs mb-2 text-gray-400 font-medium">
+                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-700">
+                    {/* Mock Dates */}
+                    <span className="opacity-30">29</span><span className="opacity-30">30</span>
+                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">1</span>
+                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">2</span>
+                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">3</span>
+                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">4</span>
+                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">5</span>
+                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">6</span>
+                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">7</span>
+                    <span className="p-1 bg-pink-500 text-white rounded-full shadow-md shadow-pink-200 cursor-pointer">8</span>
+                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">9</span>
+                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">10</span>
+                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">11</span>
+                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">12</span>
+                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">13</span>
+                    <span className="p-1 bg-purple-500 text-white rounded-full shadow-md shadow-purple-200 cursor-pointer">14</span>
+                    <span>...</span>
+                  </div>
+                  <button
+                    onClick={() => navigate('/wellness')}
+                    className="mt-6 w-full py-2 bg-pink-50 text-pink-600 rounded-xl text-xs font-bold hover:bg-pink-100 transition flex items-center justify-center gap-2"
+                  >
+                    <Heart className="w-3 h-3" /> Wellness Check-in
+                  </button>
+                </div>
+
+              </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div
-                onClick={() => navigate('/chat')}
-                className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer border-2 border-transparent hover:border-indigo-200"
-              >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center">
-                    <Bot className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">Study Helper</h3>
-                    <p className="text-gray-600 text-sm">Upload PDFs, ask questions, get explanations</p>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                onClick={() => setActiveTab('mental-support')}
-                className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer border-2 border-transparent hover:border-pink-200"
-              >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-pink-500 rounded-xl flex items-center justify-center">
-                    <Heart className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">Mental Support</h3>
-                    <p className="text-gray-600 text-sm">Emotional support and stress relief</p>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                onClick={() => setActiveTab('resume-builder')}
-                className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all cursor-pointer border-2 border-transparent hover:border-teal-200"
-              >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-teal-500 rounded-xl flex items-center justify-center">
-                    <FileText className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">Resume Builder</h3>
-                    <p className="text-gray-600 text-sm">Build or Review your Resume</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-8 shadow-lg">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Account Information</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 bg-gray-50 rounded-xl">
-                  <p className="text-sm text-gray-600 mb-1">Email</p>
-                  <p className="text-lg font-semibold text-gray-800">{user?.email}</p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-xl">
-                  <p className="text-sm text-gray-600 mb-1">Role</p>
-                  <p className="text-lg font-semibold text-gray-800 capitalize">{user?.role || 'student'}</p>
-                </div>
-              </div>
-            </div>
-          </>
+          </div>
         )}
 
         {activeTab === 'mental-support' && (
@@ -368,7 +570,7 @@ const ChatInterface = ({
       <div className="p-4 border-t border-gray-200">
         {/* File Preview */}
         {selectedFile && (
-          <div className="mb-2 flex items-center gap-2 bg-gray-100 p-2 rounded-lg inline-block">
+          <div className="mb-2 inline-flex items-center gap-2 bg-gray-100 p-2 rounded-lg">
             <span className="text-xs font-medium text-gray-700 truncate max-w-[200px]">{selectedFile.name}</span>
             <button onClick={() => setSelectedFile(null)} className="text-gray-500 hover:text-red-500">
               <X className="w-4 h-4" />
@@ -408,7 +610,7 @@ const ChatInterface = ({
           <button
             onClick={() => handleSendMessage(mode)}
             disabled={loading || (!inputMessage.trim() && !selectedFile)}
-            className="p-3 bg-purple-700 text-white rounded-full hover:bg-purple-800 transition disabled:opacity-50 flex-shrink-0"
+            className="p-3 bg-purple-700 text-white rounded-full hover:bg-purple-800 transition disabled:opacity-50 shrink-0"
           >
             <Send className="w-5 h-5" />
           </button>

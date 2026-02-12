@@ -1,84 +1,82 @@
 import React from 'react'
-import { Shield, Zap, Users, Lock, Brain, BarChart3 } from 'lucide-react'
+import { Shield, Clock, Users, Zap, Award, Globe } from 'lucide-react'
 
-const Feature = ({ icon, title, description }) => {
-  return (
-    <div className="flex gap-4 p-5 rounded-2xl bg-white border border-gray-200/50 shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-      <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
-        <div className="text-sky-500">{icon}</div>
-      </div>
-      <div>
-        <h3 className="font-semibold text-gray-900 mb-1">{title}</h3>
-        <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
-      </div>
-    </div>
-  )
-}
+const FeatureItem = ({ icon, title, description, delay }) => {
+    const Icon = icon;
+    return (
+        <div
+            className="flex flex-col items-center text-center p-6 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 animate-[fade-in-up_0.8s_ease-out_forwards] opacity-0"
+            style={{ animationDelay: `${delay}s` }}
+        >
+            <div className="w-12 h-12 rounded-full bg-sky-50 flex items-center justify-center mb-4 text-sky-600">
+                <Icon className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
+            <p className="text-gray-600 text-sm leading-relaxed">{description}</p>
+        </div>
+    );
+};
 
 const FeaturesSection = () => {
-  const features = [
-    {
-      icon: <Brain className="w-5 h-5" />,
-      title: "Advanced NLP & Sentiment Analysis",
-      description: "Our AI understands context, emotion, and intent to provide truly helpful responses.",
-    },
-    {
-      icon: <Shield className="w-5 h-5" />,
-      title: "Privacy First & FERPA Compliant",
-      description: "Your conversations and data are encrypted and never shared. Complete anonymity guaranteed.",
-    },
-    {
-      icon: <Zap className="w-5 h-5" />,
-      title: "Instant, Always Available",
-      description: "Get support 24/7 without waiting. Our AI is always ready to help when you need it.",
-    },
-    {
-      icon: <BarChart3 className="w-5 h-5" />,
-      title: "Document Intelligence",
-      description: "Upload resumes, notes, or papers and get instant AI-powered analysis and insights.",
-    },
-    {
-      icon: <Users className="w-5 h-5" />,
-      title: "Peer Collaboration",
-      description: "Connect with fellow students, share resources, and build study groups.",
-    },
-    {
-      icon: <Lock className="w-5 h-5" />,
-      title: "Secure & Scalable",
-      description: "Built on microservices architecture to handle millions of users reliably.",
-    },
-  ]
+    const features = [
+        {
+            icon: Zap,
+            title: "Real-time AI Responses",
+            description: "Get instant answers and support whenever you need it, powered by advanced language models.",
+            delay: 0.1
+        },
+        {
+            icon: Shield,
+            title: "Private & Secure",
+            description: "Your conversations and data are encrypted and handled with strict privacy standards.",
+            delay: 0.2
+        },
+        {
+            icon: Clock,
+            title: "24/7 Availability",
+            description: "Unlike human counselors or advisors, StudyBuddyAI is always awake and ready to help.",
+            delay: 0.3
+        },
+        {
+            icon: Users,
+            title: "Community Driven",
+            description: "Connect with peers, share resources, and grow together in a supportive environment.",
+            delay: 0.4
+        },
+        {
+            icon: Award,
+            title: "Personalized Growth",
+            description: "Adaptive learning paths and suggestions tailored specifically to your goals and needs.",
+            delay: 0.5
+        },
+        {
+            icon: Globe,
+            title: "Accessible Anywhere",
+            description: "Access your dashboard from any device, ensuring your support system travels with you.",
+            delay: 0.6
+        }
+    ]
 
-  return (
-    <section className="py-0 bg-gray-50 relative">
-      <div className="container mx-auto px-4 py-12 md:py-16">
-        {/* Section header */}
-        <div className="max-w-2xl mx-auto text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Built for Students,
-            <span className="block text-sky-500">Powered by AI</span>
-          </h2>
-          <p className="text-gray-600 text-lg">
-            Cutting-edge technology designed with your success in mind.
-          </p>
-        </div>
+    return (
+        <section className="py-16 bg-gray-50/50">
+            <div className="container mx-auto px-4">
+                <div className="max-w-3xl mx-auto text-center mb-12">
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                        Built for Your Success
+                    </h2>
+                    <p className="text-lg text-gray-600">
+                        We combine cutting-edge AI technology with student-centric design to provide a superior support experience.
+                    </p>
+                </div>
 
-        {/* Features grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl mx-auto">
-          {features.map((feature, index) => (
-            <div 
-              key={feature.title}
-              className="animate-[fade-in-up_0.8s_ease-out_forwards] opacity-0"
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              <Feature {...feature} />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                    {features.map((feature, index) => (
+                        <FeatureItem key={index} {...feature} />
+                    ))}
+                </div>
             </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
+        </section>
+    )
 }
 
 export default FeaturesSection
-

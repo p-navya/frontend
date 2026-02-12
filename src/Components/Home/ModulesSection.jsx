@@ -54,13 +54,12 @@ const ModuleCard = ({ title, description, features, icon, colorClass, buttonText
 
       {/* Button */}
       <Link to={link}>
-        <button className={`w-full px-4 py-3 rounded-lg font-semibold text-sm transition-all hover:scale-[1.02] ${
-          colorClass === 'mental' 
+        <button className={`w-full px-4 py-3 rounded-lg font-semibold text-sm transition-all hover:scale-[1.02] ${colorClass === 'mental'
             ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-lg'
             : colorClass === 'career'
-            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:shadow-lg'
-            : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:shadow-lg'
-        }`}>
+              ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:shadow-lg'
+              : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:shadow-lg'
+          }`}>
           {buttonText}
         </button>
       </Link>
@@ -131,9 +130,9 @@ const ModulesSection = () => {
         {/* Module cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {modules.map((module, index) => (
-            <div 
-              key={module.title} 
-              className="animate-[fade-in-up_0.8s_ease-out_forwards] opacity-0" 
+            <div
+              key={module.title}
+              className="animate-[fade-in-up_0.8s_ease-out_forwards] opacity-0"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <ModuleCard {...module} />

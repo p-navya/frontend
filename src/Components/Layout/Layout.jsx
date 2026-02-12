@@ -8,14 +8,24 @@ function LayoutContent() {
     const location = useLocation()
     const isLoginPage = location.pathname === '/login'
     const isHomePage = location.pathname === '/'
+    const isDashboard = location.pathname === '/dashboard'
+    const isChatPage = location.pathname === '/chat'
+    const isResumePage = location.pathname === '/resume'
+    const isResourcesPage = location.pathname === '/resources'
+    const isWellnessPage = location.pathname === '/wellness'
+    const isStudyGroupsPage = location.pathname === '/study-groups'
+    const isAchievementsPage = location.pathname === '/achievements'
+
+    const hideHeader = isLoginPage || isHomePage || isChatPage || isResumePage || isResourcesPage || isWellnessPage || isStudyGroupsPage || isAchievementsPage
+    const hideFooter = isLoginPage || isHomePage || isDashboard || isChatPage || isResumePage || isResourcesPage || isWellnessPage || isStudyGroupsPage || isAchievementsPage
 
     return (
         <>
-            {!isLoginPage && !isHomePage && <Header />}
+            {!hideHeader && <Header />}
             <div>
                 <Routers />
             </div>
-            {!isLoginPage && !isHomePage && <Footer />}
+            {!hideFooter && <Footer />}
         </>
     )
 }

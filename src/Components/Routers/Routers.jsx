@@ -5,6 +5,11 @@ import UserDashboard from '../Pages/UserDashboard'
 import AdminDashboard from '../Pages/AdminDashboard'
 import MentorDashboard from '../Pages/MentorDashboard'
 import ChatPage from '../Pages/ChatPage'
+import ResumePage from '../Pages/ResumePage'
+import ResourcesPage from '../Pages/ResourcesPage'
+import WellnessPage from '../Pages/WellnessPage'
+import StudyGroupsPage from '../Pages/StudyGroupsPage'
+import AchievementsPage from '../Pages/AchievementsPage'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
@@ -61,8 +66,14 @@ function Routers() {
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path='/login' element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path='/signup' element={<PublicRoute><Login /></PublicRoute>} />
         <Route path='/dashboard' element={<ProtectedRoute><RoleBasedDashboard /></ProtectedRoute>} />
         <Route path='/chat' element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+        <Route path='/resume' element={<ProtectedRoute><ResumePage /></ProtectedRoute>} />
+        <Route path='/resources' element={<ProtectedRoute><ResourcesPage /></ProtectedRoute>} />
+        <Route path='/wellness' element={<ProtectedRoute><WellnessPage /></ProtectedRoute>} />
+        <Route path='/study-groups' element={<ProtectedRoute><StudyGroupsPage /></ProtectedRoute>} />
+        <Route path='/achievements' element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
         <Route path='*' element={<Navigate to="/" replace />} />
       </Routes>
     </div>
