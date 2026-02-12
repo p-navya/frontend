@@ -21,6 +21,57 @@ function UserDashboard() {
 
   const [activeTab, setActiveTab] = useState('overview')
   const [stats, setStats] = useState(calculateStats())
+  const [currentDate, setCurrentDate] = useState(new Date())
+
+  const getDaysInMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+  }
+
+  const getFirstDayOfMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay()
+  }
+
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))
+  }
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))
+  }
+
+  const renderCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(currentDate)
+    const firstDay = getFirstDayOfMonth(currentDate)
+    const days = []
+
+    // Empty cells
+    for (let i = 0; i < firstDay; i++) {
+      days.push(<span key={`empty-${i}`}></span>)
+    }
+
+    // Days
+    for (let i = 1; i <= daysInMonth; i++) {
+      const isToday =
+        i === new Date().getDate() &&
+        currentDate.getMonth() === new Date().getMonth() &&
+        currentDate.getFullYear() === new Date().getFullYear()
+
+      days.push(
+        <span
+          key={i}
+          className={`p-1 rounded-full cursor-pointer transition-all w-8 h-8 flex items-center justify-center mx-auto ${isToday
+            ? 'bg-pink-500 text-white shadow-md shadow-pink-200'
+            : 'hover:bg-gray-100 text-gray-700'
+            }`}
+        >
+          {i}
+        </span>
+      )
+    }
+    return days
+  }
+
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
   useEffect(() => {
     const handleStorageChange = () => setStats(calculateStats());
@@ -348,7 +399,7 @@ function UserDashboard() {
 
                 {/* Profile Card */}
                 <div className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-blue-200/50 hover:shadow-2xl hover:shadow-blue-200/40 transition-all duration-300 text-center relative">
-                  <button className="absolute top-6 right-6 p-2 bg-white/50 rounded-full hover:bg-white text-gray-400 backdrop-blur-sm"><Edit className="w-3 h-3" /></button>
+                  <button onClick={() => navigate('/edit-profile')} className="absolute top-6 right-6 p-2 bg-white/50 rounded-full hover:bg-white text-gray-400 backdrop-blur-sm transition-colors"><Edit className="w-3 h-3" /></button>
                   <div className="w-20 h-20 bg-gray-900 rounded-full mx-auto mb-4 p-1 border-2 border-dashed border-gray-300">
                     <div className="w-full h-full bg-gray-800 rounded-full flex items-center justify-center text-2xl">👨‍🎓</div>
                   </div>
@@ -392,33 +443,17 @@ function UserDashboard() {
                 {/* Wellness / Calendar Widget */}
                 <div className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-rose-200/50 hover:shadow-2xl hover:shadow-rose-200/40 transition-all duration-300 flex-1">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-gray-800">December</h3>
+                    <h3 className="font-bold text-gray-800">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</h3>
                     <div className="flex gap-2">
-                      <button className="p-1 hover:bg-gray-50 rounded-full"><ChevronRight className="w-3 h-3 rotate-180" /></button>
-                      <button className="p-1 hover:bg-gray-50 rounded-full"><ChevronRight className="w-3 h-3" /></button>
+                      <button onClick={handlePrevMonth} className="p-1 hover:bg-gray-50 rounded-full bg-white/50 shadow-sm transition"><ChevronRight className="w-3 h-3 rotate-180" /></button>
+                      <button onClick={handleNextMonth} className="p-1 hover:bg-gray-50 rounded-full bg-white/50 shadow-sm transition"><ChevronRight className="w-3 h-3" /></button>
                     </div>
                   </div>
                   <div className="grid grid-cols-7 gap-1 text-center text-xs mb-2 text-gray-400 font-medium">
                     <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
                   </div>
                   <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-700">
-                    {/* Mock Dates */}
-                    <span className="opacity-30">29</span><span className="opacity-30">30</span>
-                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">1</span>
-                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">2</span>
-                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">3</span>
-                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">4</span>
-                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">5</span>
-                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">6</span>
-                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">7</span>
-                    <span className="p-1 bg-pink-500 text-white rounded-full shadow-md shadow-pink-200 cursor-pointer">8</span>
-                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">9</span>
-                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">10</span>
-                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">11</span>
-                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">12</span>
-                    <span className="p-1 hover:bg-gray-100 rounded-full cursor-pointer">13</span>
-                    <span className="p-1 bg-purple-500 text-white rounded-full shadow-md shadow-purple-200 cursor-pointer">14</span>
-                    <span>...</span>
+                    {renderCalendarDays()}
                   </div>
                   <button
                     onClick={() => navigate('/wellness')}
@@ -520,6 +555,9 @@ const ChatInterface = ({
         <Icon className="w-6 h-6" />
         <h3 className="text-xl font-bold">{title}</h3>
       </div>
+
+
+
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

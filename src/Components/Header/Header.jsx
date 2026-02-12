@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { GraduationCap, Brain, User, X } from 'lucide-react'
+import { GraduationCap, Brain, User, X, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 function Header() {
@@ -71,6 +71,15 @@ function Header() {
                     Dashboard
                   </Link>
                 )}
+
+                <button
+                  onClick={() => {
+                    document.documentElement.classList.toggle('dark');
+                  }}
+                  className="p-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
+                >
+                  {document.documentElement.classList.contains('dark') ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
 
                 <button
                   onClick={() => setShowProfile(!showProfile)}

@@ -15,9 +15,10 @@ function LayoutContent() {
     const isWellnessPage = location.pathname === '/wellness'
     const isStudyGroupsPage = location.pathname === '/study-groups'
     const isAchievementsPage = location.pathname === '/achievements'
+    const isEditProfilePage = location.pathname === '/edit-profile'
 
-    const hideHeader = isLoginPage || isHomePage || isChatPage || isResumePage || isResourcesPage || isWellnessPage || isStudyGroupsPage || isAchievementsPage
-    const hideFooter = isLoginPage || isHomePage || isDashboard || isChatPage || isResumePage || isResourcesPage || isWellnessPage || isStudyGroupsPage || isAchievementsPage
+    const hideHeader = isLoginPage || isHomePage || isChatPage || isResumePage || isResourcesPage || isWellnessPage || isStudyGroupsPage || isAchievementsPage || isEditProfilePage
+    const hideFooter = isLoginPage || isHomePage || isDashboard || isChatPage || isResumePage || isResourcesPage || isWellnessPage || isStudyGroupsPage || isAchievementsPage || isEditProfilePage
 
     return (
         <>

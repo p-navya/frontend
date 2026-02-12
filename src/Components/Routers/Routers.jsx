@@ -10,6 +10,7 @@ import ResourcesPage from '../Pages/ResourcesPage'
 import WellnessPage from '../Pages/WellnessPage'
 import StudyGroupsPage from '../Pages/StudyGroupsPage'
 import AchievementsPage from '../Pages/AchievementsPage'
+import EditProfile from '../Pages/EditProfile'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
@@ -74,6 +75,7 @@ function Routers() {
         <Route path='/wellness' element={<ProtectedRoute><WellnessPage /></ProtectedRoute>} />
         <Route path='/study-groups' element={<ProtectedRoute><StudyGroupsPage /></ProtectedRoute>} />
         <Route path='/achievements' element={<ProtectedRoute><AchievementsPage /></ProtectedRoute>} />
+        <Route path='/edit-profile' element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
         <Route path='*' element={<Navigate to="/" replace />} />
       </Routes>
     </div>
