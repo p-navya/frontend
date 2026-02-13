@@ -38,3 +38,11 @@ export const logout = () => {
   removeAuthToken();
 };
 
+// Forgot password
+export const forgotPassword = async (email) => {
+  return await apiRequest('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  });
+};
+

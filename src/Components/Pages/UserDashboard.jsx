@@ -2,26 +2,85 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { GraduationCap, BookOpen, Users, Award, Heart, FileText, Send, Paperclip, Bot, X, ChevronRight, Play, Edit, Clock, Check } from 'lucide-react'
 import { sendChatMessage } from '../../services/chatbotService'
+import EditProfileModal from './EditProfileModal' // Import the modal
+
+const ViewProfileModal = ({ imageUrl, onClose }) => {
+  if (!imageUrl) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in" onClick={onClose}>
+      <div className="relative max-w-4xl max-h-[90vh] w-full" onClick={e => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          className="absolute -top-12 right-0 p-2 bg-white/10 rounded-full hover:bg-white/20 text-white transition"
+        >
+          <X className="w-6 h-6" />
+        </button>
+        <img
+          src={imageUrl}
+          alt="Profile"
+          className="w-full h-full object-contain max-h-[85vh] rounded-xl shadow-2xl"
+        />
+      </div>
+    </div>
+  )
+}
 
 import { useNavigate } from 'react-router-dom'
 
 function UserDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  // Initialize stats and profile from localStorage
   const calculateStats = () => {
     const myGroups = JSON.parse(localStorage.getItem('studybuddy_my_groups') || '[]');
     const history = JSON.parse(localStorage.getItem('studybuddy_achievements') || '[]');
     const totalXP = history.reduce((sum, item) => sum + item.xp, 0);
+    const studyHours = parseFloat(localStorage.getItem('studybuddy_study_hours') || '0');
+    const notesCount = parseInt(localStorage.getItem('studybuddy_notes_count') || '0');
+
     return {
       groups: myGroups.length,
       achievements: history.length,
-      score: totalXP
+      score: totalXP,
+      studyHours,
+      notesCount
     };
   };
 
+  const getSavedProfile = () => {
+    try {
+      return JSON.parse(localStorage.getItem('user_profile_data') || '{}');
+    } catch {
+      return {};
+    }
+  };
+
   const [activeTab, setActiveTab] = useState('overview')
+
   const [stats, setStats] = useState(calculateStats())
+  const [userProfile, setUserProfile] = useState(getSavedProfile())
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [showEditProfile, setShowEditProfile] = useState(false) // State for modal
+  const [viewProfileImage, setViewProfileImage] = useState(null) // State for viewing image
+
+
+  // Listen for storage changes to update profile and stats
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setStats(calculateStats());
+      setUserProfile(getSavedProfile());
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Custom event dispatch for same-window updates
+    window.addEventListener('profileUpdated', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('profileUpdated', handleStorageChange);
+    };
+  }, []);
+
 
   const getDaysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
@@ -185,19 +244,19 @@ function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-indigo-100 via-purple-100 to-pink-100 pt-24 pb-6 px-6 md:px-8 md:pt-28">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 dark:from-gray-900 dark:via-gray-900 dark:to-slate-900 pt-20 pb-6 px-4 md:px-8 md:pt-24 transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-2 gap-2">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">{getGreeting()}, {user?.name || 'Student'}!</h1>
-            <p className="text-gray-600">Welcome to your Student Dashboard</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-1">{getGreeting()}, {user?.name || 'Student'}!</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-300">Welcome to your Student Dashboard</p>
           </div>
         </div>
 
 
         {/* Tab Navigation */}
-        <div className="flex overflow-x-auto pb-2 gap-2 mb-6 border-b border-gray-200">
+        <div className="flex overflow-x-auto pb-1 gap-1 mb-4 border-b border-gray-200 dark:border-gray-700">
           {[
             { id: 'overview', label: 'Overview' },
             { id: 'study-helper', label: 'Study Helper' },
@@ -220,9 +279,9 @@ function UserDashboard() {
                   setActiveTab(tab.id)
                 }
               }}
-              className={`px-4 md:px-6 py-3 font-semibold transition whitespace-nowrap ${activeTab === tab.id
-                ? 'text-purple-700 border-b-2 border-purple-700'
-                : 'text-gray-600 hover:text-gray-800'
+              className={`px-3 md:px-5 py-2 text-sm font-semibold transition whitespace-nowrap ${activeTab === tab.id
+                ? 'text-purple-700 border-b-2 border-purple-700 dark:text-purple-400 dark:border-purple-400'
+                : 'text-gray-600 hover:text-gray-800 dark:text-gray-300 dark:hover:text-white'
                 }`}
             >
               {tab.label}
@@ -233,22 +292,22 @@ function UserDashboard() {
         {/* Tab Content */}
         {activeTab === 'overview' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 bg-white/20 backdrop-blur-sm p-4 rounded-4xl border border-white/20">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 bg-white/20 dark:bg-black/20 backdrop-blur-sm p-3 rounded-2xl border border-white/20 dark:border-white/5">
 
               {/* Left Column - Chat & Actionable */}
-              <div className="md:col-span-3 flex flex-col gap-6">
+              <div className="md:col-span-3 flex flex-col gap-4">
                 {/* Chat / Study Helper Widget */}
                 <div
                   onClick={() => navigate('/chat')}
-                  className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-indigo-200/50 hover:shadow-2xl hover:shadow-indigo-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer relative overflow-hidden group h-64 flex flex-col justify-between"
+                  className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-indigo-200/50 dark:border-indigo-500/30 hover:shadow-2xl hover:shadow-indigo-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer relative overflow-hidden group h-64 flex flex-col justify-between"
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
+                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-300">
                       <Bot className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-800">Study Helper</h3>
-                      <p className="text-xs text-gray-500">Ask a question...</p>
+                      <h3 className="font-bold text-gray-800 dark:text-white">Study Helper</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-300">Ask a question...</p>
                     </div>
                   </div>
                   <div className="space-y-3">
@@ -267,16 +326,16 @@ function UserDashboard() {
                 {/* Resume Architect Widget */}
                 <div
                   onClick={() => navigate('/resume')}
-                  className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-teal-200/50 hover:shadow-2xl hover:shadow-teal-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
+                  className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-teal-200/50 dark:border-teal-500/30 hover:shadow-2xl hover:shadow-teal-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
                 >
                   <div className="flex justify-between items-start mb-4">
-                    <div className="p-3 bg-teal-100 rounded-2xl text-teal-600">
+                    <div className="p-3 bg-teal-100 dark:bg-teal-900/50 rounded-2xl text-teal-600 dark:text-teal-300">
                       <FileText className="w-6 h-6" />
                     </div>
-                    <div className="bg-teal-50 text-teal-700 text-xs font-bold px-2 py-1 rounded-full">New</div>
+                    <div className="bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 text-xs font-bold px-2 py-1 rounded-full">New</div>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-800 mb-1">Resume Architect</h3>
-                  <p className="text-xs text-gray-500 mb-4">Build professional resumes with AI assistance.</p>
+                  <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-1">Resume Architect</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-300 mb-4">Build professional resumes with AI assistance.</p>
                   <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2 overflow-hidden">
                     <div className="bg-teal-500 h-full w-3/4 rounded-full"></div>
                   </div>
@@ -288,57 +347,57 @@ function UserDashboard() {
               </div>
 
               {/* Middle Column - Stats & Activity */}
-              <div className="md:col-span-6 flex flex-col gap-6">
+              <div className="md:col-span-6 flex flex-col gap-4">
 
                 {/* Top Row Stats */}
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-4">
                   {/* Study Groups Stat */}
                   <div
                     onClick={() => navigate('/study-groups')}
-                    className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-green-200/50 hover:shadow-2xl hover:shadow-green-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer relative overflow-hidden"
+                    className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-green-200/50 dark:border-green-500/30 hover:shadow-2xl hover:shadow-green-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer relative overflow-hidden"
                   >
-                    <h3 className="text-gray-500 text-sm font-medium mb-1">Study Groups</h3>
+                    <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Study Groups</h3>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-extrabold text-gray-800">{stats.groups}</span>
-                      <span className="text-xs text-green-500 font-bold bg-green-50 px-1.5 py-0.5 rounded-full">Active</span>
+                      <span className="text-4xl font-extrabold text-gray-800 dark:text-white">{stats.groups}</span>
+                      <span className="text-xs text-green-500 font-bold bg-green-50 dark:bg-green-900/30 px-1.5 py-0.5 rounded-full">Active</span>
                     </div>
 
                     {/* Mini Line Chart Visualization */}
                     <div className="mt-4 h-12 flex items-end gap-1 opacity-50">
-                      <div className="w-1/5 bg-green-200 h-[40%] rounded-t-sm"></div>
-                      <div className="w-1/5 bg-green-300 h-[70%] rounded-t-sm"></div>
-                      <div className="w-1/5 bg-green-400 h-[50%] rounded-t-sm"></div>
-                      <div className="w-1/5 bg-green-500 h-[90%] rounded-t-sm"></div>
-                      <div className="w-1/5 bg-green-600 h-[60%] rounded-t-sm"></div>
+                      <div className="w-1/5 bg-green-200 dark:bg-green-700 h-[40%] rounded-t-sm"></div>
+                      <div className="w-1/5 bg-green-300 dark:bg-green-600 h-[70%] rounded-t-sm"></div>
+                      <div className="w-1/5 bg-green-400 dark:bg-green-500 h-[50%] rounded-t-sm"></div>
+                      <div className="w-1/5 bg-green-500 dark:bg-green-400 h-[90%] rounded-t-sm"></div>
+                      <div className="w-1/5 bg-green-600 dark:bg-green-300 h-[60%] rounded-t-sm"></div>
                     </div>
                   </div>
 
                   {/* Achievements Stat */}
                   <div
                     onClick={() => navigate('/achievements')}
-                    className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-purple-200/50 hover:shadow-2xl hover:shadow-purple-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer relative overflow-hidden"
+                    className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-purple-200/50 dark:border-purple-500/30 hover:shadow-2xl hover:shadow-purple-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer relative overflow-hidden"
                   >
-                    <h3 className="text-gray-500 text-sm font-medium mb-1">Achievements</h3>
+                    <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">Achievements</h3>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-extrabold text-gray-800">{stats.achievements}</span>
-                      <span className="text-xs text-purple-500 font-bold bg-purple-50 px-1.5 py-0.5 rounded-full">Tests</span>
+                      <span className="text-4xl font-extrabold text-gray-800 dark:text-white">{stats.achievements}</span>
+                      <span className="text-xs text-purple-500 font-bold bg-purple-50 dark:bg-purple-900/30 px-1.5 py-0.5 rounded-full">Tests</span>
                     </div>
-                    <div className="mt-2 text-sm font-bold text-gray-400">
-                      Score: <span className="text-purple-600">{stats.score} XP</span>
+                    <div className="mt-2 text-sm font-bold text-gray-400 dark:text-gray-500">
+                      Score: <span className="text-purple-600 dark:text-purple-400">{stats.score} XP</span>
                     </div>
 
                     {/* Mini Progress Circle */}
-                    <div className="absolute right-4 bottom-4 w-12 h-12 rounded-full border-4 border-purple-100 border-t-purple-500 flex items-center justify-center">
+                    <div className="absolute right-4 bottom-4 w-12 h-12 rounded-full border-4 border-purple-100 dark:border-purple-800 border-t-purple-500 flex items-center justify-center">
                       <Award className="w-5 h-5 text-purple-500" />
                     </div>
                   </div>
                 </div>
 
                 {/* Activity Hours Chart */}
-                <div className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-orange-200/50 hover:shadow-2xl hover:shadow-orange-200/40 transition-all duration-300 flex-1 min-h-[200px]">
+                <div className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-orange-200/50 dark:border-orange-500/30 hover:shadow-2xl hover:shadow-orange-200/40 transition-all duration-300 flex-1 min-h-[200px]">
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-bold text-gray-800 text-lg">Activity Hours</h3>
-                    <select className="bg-gray-50 border-none text-xs text-gray-500 rounded-lg px-2 py-1 outline-none font-medium">
+                    <h3 className="font-bold text-gray-800 dark:text-white text-lg">Activity Hours</h3>
+                    <select className="bg-gray-50 dark:bg-gray-700 border-none text-xs text-gray-500 dark:text-gray-300 rounded-lg px-2 py-1 outline-none font-medium">
                       <option>Weekly</option>
                       <option>Monthly</option>
                     </select>
@@ -363,26 +422,26 @@ function UserDashboard() {
                 </div>
 
                 {/* Today's Classes / Schedule */}
-                <div className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-blue-200/50 hover:shadow-2xl hover:shadow-blue-200/40 transition-all duration-300">
+                <div className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-blue-200/50 dark:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-200/40 transition-all duration-300">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-gray-800">Today's Schedule</h3>
+                    <h3 className="font-bold text-gray-800 dark:text-white">Today's Schedule</h3>
                     <button className="p-1 hover:bg-gray-100 rounded-full"><ChevronRight className="w-4 h-4 text-gray-400" /></button>
                   </div>
                   <div className="space-y-3">
-                    <div className="flex items-center gap-4 p-3 hover:bg-white hover:shadow-md rounded-2xl transition-all duration-300 group cursor-pointer border border-transparent hover:border-blue-100">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold">10</div>
+                    <div className="flex items-center gap-4 p-3 hover:bg-white dark:hover:bg-gray-700 hover:shadow-md rounded-2xl transition-all duration-300 group cursor-pointer border border-transparent hover:border-blue-100">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold">10</div>
                       <div className="flex-1">
-                        <h4 className="font-bold text-gray-800 text-sm">Physics Mechanics</h4>
+                        <h4 className="font-bold text-gray-800 dark:text-gray-200 text-sm">Physics Mechanics</h4>
                         <p className="text-xs text-gray-500">10:00 AM - 11:30 AM</p>
                       </div>
                       <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm group-hover:bg-blue-500 group-hover:text-white transition">
                         <Play className="w-3 h-3 ml-0.5 fill-current" />
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-2xl transition group cursor-pointer">
-                      <div className="w-12 h-12 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center font-bold">12</div>
+                    <div className="flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-2xl transition group cursor-pointer">
+                      <div className="w-12 h-12 rounded-2xl bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-300 flex items-center justify-center font-bold">12</div>
                       <div className="flex-1">
-                        <h4 className="font-bold text-gray-800 text-sm">Design Principles</h4>
+                        <h4 className="font-bold text-gray-800 dark:text-gray-200 text-sm">Design Principles</h4>
                         <p className="text-xs text-gray-500">12:00 PM - 01:30 PM</p>
                       </div>
                       <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm group-hover:bg-pink-500 group-hover:text-white transition">
@@ -395,29 +454,43 @@ function UserDashboard() {
               </div>
 
               {/* Right Column - Profile & Calendar */}
-              <div className="md:col-span-3 flex flex-col gap-6">
+              <div className="md:col-span-3 flex flex-col gap-4">
 
                 {/* Profile Card */}
-                <div className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-blue-200/50 hover:shadow-2xl hover:shadow-blue-200/40 transition-all duration-300 text-center relative">
-                  <button onClick={() => navigate('/edit-profile')} className="absolute top-6 right-6 p-2 bg-white/50 rounded-full hover:bg-white text-gray-400 backdrop-blur-sm transition-colors"><Edit className="w-3 h-3" /></button>
-                  <div className="w-20 h-20 bg-gray-900 rounded-full mx-auto mb-4 p-1 border-2 border-dashed border-gray-300">
-                    <div className="w-full h-full bg-gray-800 rounded-full flex items-center justify-center text-2xl">👨‍🎓</div>
+                <div className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-blue-200/50 dark:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-200/40 transition-all duration-300 text-center relative">
+                  <button
+                    onClick={() => setShowEditProfile(true)}
+                    className="absolute top-6 right-6 p-2 bg-white/50 dark:bg-gray-700/50 rounded-full hover:bg-white dark:hover:bg-gray-700 text-gray-400 backdrop-blur-sm transition-colors"
+                  >
+                    <Edit className="w-3 h-3" />
+                  </button>
+                  <div
+                    className="w-20 h-20 rounded-full mx-auto mb-4 p-1 bg-white dark:bg-gray-700 shadow-md cursor-pointer hover:scale-105 transition-transform"
+                    onClick={() => userProfile.profileImage && setViewProfileImage(userProfile.profileImage)}
+                  >
+                    <div className="w-full h-full rounded-full flex items-center justify-center text-2xl overflow-hidden bg-gray-100 dark:bg-gray-600">
+                      {userProfile.profileImage ? (
+                        <img src={userProfile.profileImage} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-3xl">👨‍🎓</span>
+                      )}
+                    </div>
                   </div>
-                  <h2 className="text-lg font-bold text-gray-800">{user?.name || 'Student'}</h2>
-                  <p className="text-xs text-gray-500 mb-6">@{user?.email?.split('@')[0] || 'username'}</p>
+                  <h2 className="text-lg font-bold text-gray-800 dark:text-white">{userProfile.name || user?.name || 'Student'}</h2>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">@{userProfile.email?.split('@')[0] || user?.email?.split('@')[0] || 'username'}</p>
 
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-purple-50 p-2 rounded-2xl">
-                      <Clock className="w-4 h-4 text-purple-500 mx-auto mb-1" />
-                      <div className="text-xs font-bold text-gray-700">78h</div>
+                    <div className="bg-purple-50 dark:bg-purple-900/40 p-2 rounded-2xl" title="Study Hours">
+                      <Clock className="w-4 h-4 text-purple-500 dark:text-purple-300 mx-auto mb-1" />
+                      <div className="text-xs font-bold text-gray-700 dark:text-gray-200">{stats.studyHours}h</div>
                     </div>
-                    <div className="bg-orange-50 p-2 rounded-2xl">
-                      <FileText className="w-4 h-4 text-orange-500 mx-auto mb-1" />
-                      <div className="text-xs font-bold text-gray-700">4</div>
+                    <div className="bg-orange-50 dark:bg-orange-900/40 p-2 rounded-2xl" title="Notes/Resources">
+                      <FileText className="w-4 h-4 text-orange-500 dark:text-orange-300 mx-auto mb-1" />
+                      <div className="text-xs font-bold text-gray-700 dark:text-gray-200">{stats.notesCount}</div>
                     </div>
-                    <div className="bg-green-50 p-2 rounded-2xl">
-                      <Check className="w-4 h-4 text-green-500 mx-auto mb-1" />
-                      <div className="text-xs font-bold text-gray-700">{stats.achievements}</div>
+                    <div className="bg-green-50 dark:bg-green-900/40 p-2 rounded-2xl" title="Achievements Unlocked">
+                      <Check className="w-4 h-4 text-green-500 dark:text-green-300 mx-auto mb-1" />
+                      <div className="text-xs font-bold text-gray-700 dark:text-gray-200">{stats.achievements}</div>
                     </div>
                   </div>
                 </div>
@@ -425,11 +498,11 @@ function UserDashboard() {
                 {/* Resource Hub Link (styled as Total Courses) */}
                 <div
                   onClick={() => navigate('/resources')}
-                  className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-pink-200/50 hover:shadow-2xl hover:shadow-pink-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer"
+                  className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-pink-200/50 dark:border-pink-500/30 hover:shadow-2xl hover:shadow-pink-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer"
                 >
-                  <h3 className="text-gray-500 text-sm font-medium mb-3">Resource Hub</h3>
+                  <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-3">Resource Hub</h3>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-4xl font-extrabold text-gray-800">20+</span>
+                    <span className="text-4xl font-extrabold text-gray-800 dark:text-white">20+</span>
                     <div className="flex gap-1">
                       <div className="w-2 h-8 bg-pink-400 rounded-full opacity-60"></div>
                       <div className="w-2 h-6 bg-purple-400 rounded-full opacity-60"></div>
@@ -441,23 +514,23 @@ function UserDashboard() {
                 </div>
 
                 {/* Wellness / Calendar Widget */}
-                <div className="bg-white/70 backdrop-blur-xl rounded-4xl p-6 shadow-xl border border-rose-200/50 hover:shadow-2xl hover:shadow-rose-200/40 transition-all duration-300 flex-1">
+                <div className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-rose-200/50 dark:border-rose-500/30 hover:shadow-2xl hover:shadow-rose-200/40 transition-all duration-300 flex-1">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-gray-800">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</h3>
+                    <h3 className="font-bold text-gray-800 dark:text-white">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</h3>
                     <div className="flex gap-2">
-                      <button onClick={handlePrevMonth} className="p-1 hover:bg-gray-50 rounded-full bg-white/50 shadow-sm transition"><ChevronRight className="w-3 h-3 rotate-180" /></button>
-                      <button onClick={handleNextMonth} className="p-1 hover:bg-gray-50 rounded-full bg-white/50 shadow-sm transition"><ChevronRight className="w-3 h-3" /></button>
+                      <button onClick={handlePrevMonth} className="p-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full bg-white/50 dark:bg-gray-700/50 shadow-sm transition"><ChevronRight className="w-3 h-3 rotate-180 dark:text-gray-300" /></button>
+                      <button onClick={handleNextMonth} className="p-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full bg-white/50 dark:bg-gray-700/50 shadow-sm transition"><ChevronRight className="w-3 h-3 dark:text-gray-300" /></button>
                     </div>
                   </div>
                   <div className="grid grid-cols-7 gap-1 text-center text-xs mb-2 text-gray-400 font-medium">
                     <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
                   </div>
-                  <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-700">
+                  <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-700 dark:text-gray-300">
                     {renderCalendarDays()}
                   </div>
                   <button
                     onClick={() => navigate('/wellness')}
-                    className="mt-6 w-full py-2 bg-pink-50 text-pink-600 rounded-xl text-xs font-bold hover:bg-pink-100 transition flex items-center justify-center gap-2"
+                    className="mt-6 w-full py-2 bg-pink-50 dark:bg-pink-900/30 text-pink-600 dark:text-pink-300 rounded-xl text-xs font-bold hover:bg-pink-100 dark:hover:bg-pink-900/50 transition flex items-center justify-center gap-2"
                   >
                     <Heart className="w-3 h-3" /> Wellness Check-in
                   </button>
@@ -524,6 +597,17 @@ function UserDashboard() {
             handleSendMessage={handleSendMessage}
           />
         )}
+
+        {/* Render Edit Profile Modal */}
+        {showEditProfile && (
+          <EditProfileModal onClose={() => setShowEditProfile(false)} />
+        )}
+
+        {/* Render View Profile Modal */}
+        {viewProfileImage && (
+          <ViewProfileModal imageUrl={viewProfileImage} onClose={() => setViewProfileImage(null)} />
+        )}
+
       </div>
     </div>
   )

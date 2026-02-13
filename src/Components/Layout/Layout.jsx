@@ -7,6 +7,7 @@ import { BrowserRouter as Router, useLocation } from 'react-router-dom'
 function LayoutContent() {
     const location = useLocation()
     const isLoginPage = location.pathname === '/login'
+    const isSignupPage = location.pathname === '/signup'
     const isHomePage = location.pathname === '/'
     const isDashboard = location.pathname === '/dashboard'
     const isChatPage = location.pathname === '/chat'
@@ -17,8 +18,8 @@ function LayoutContent() {
     const isAchievementsPage = location.pathname === '/achievements'
     const isEditProfilePage = location.pathname === '/edit-profile'
 
-    const hideHeader = isLoginPage || isHomePage || isChatPage || isResumePage || isResourcesPage || isWellnessPage || isStudyGroupsPage || isAchievementsPage || isEditProfilePage
-    const hideFooter = isLoginPage || isHomePage || isDashboard || isChatPage || isResumePage || isResourcesPage || isWellnessPage || isStudyGroupsPage || isAchievementsPage || isEditProfilePage
+    const hideHeader = isLoginPage || isSignupPage || isHomePage || isChatPage || isResumePage || isResourcesPage || isWellnessPage || isStudyGroupsPage || isAchievementsPage || isEditProfilePage
+    const hideFooter = isLoginPage || isSignupPage || isHomePage || isDashboard || isChatPage || isResumePage || isResourcesPage || isWellnessPage || isStudyGroupsPage || isAchievementsPage || isEditProfilePage
 
     return (
         <>

@@ -7,6 +7,12 @@ function Header() {
   const navigate = useNavigate()
   const { user, isAuthenticated, logout } = useAuth()
   const [showProfile, setShowProfile] = useState(false)
+  const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'))
+
+  const toggleTheme = () => {
+    document.documentElement.classList.toggle('dark')
+    setIsDark(document.documentElement.classList.contains('dark'))
+  }
 
   const handleLogout = () => {
     navigate('/')
@@ -18,28 +24,28 @@ function Header() {
   const isDashboard = location.pathname === '/dashboard'
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/10 backdrop-blur-md border-b border-white/20 shadow-sm transition-all duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/10 dark:bg-black/10 backdrop-blur-md border-b border-white/20 dark:border-white/5 shadow-sm transition-all duration-300">
+      <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${isDashboard ? 'w-full max-w-full' : 'max-w-7xl'}`}>
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center gap-2 group cursor-default">
             {isDashboard ? (
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-linear-to-br from-teal-500 to-green-500 rounded-xl flex items-center justify-center transition-transform relative">
+                <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-green-500 rounded-xl flex items-center justify-center transition-transform relative">
                   <GraduationCap className="w-6 h-6 text-white z-10" />
                   <Brain className="w-3 h-3 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                 </div>
-                <span className="text-2xl font-bold text-gray-800">
+                <span className="text-2xl font-bold text-gray-800 dark:text-white">
                   StudyBuddyAI
                 </span>
               </div>
             ) : (
               <Link to="/" className="flex items-center gap-2 group">
-                <div className="w-10 h-10 bg-linear-to-br from-teal-500 to-green-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform relative">
+                <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-green-500 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform relative">
                   <GraduationCap className="w-6 h-6 text-white z-10" />
                   <Brain className="w-3 h-3 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                 </div>
-                <span className="text-2xl font-bold text-gray-800">
+                <span className="text-2xl font-bold text-gray-800 dark:text-white">
                   StudyBuddyAI
                 </span>
               </Link>
@@ -73,12 +79,10 @@ function Header() {
                 )}
 
                 <button
-                  onClick={() => {
-                    document.documentElement.classList.toggle('dark');
-                  }}
+                  onClick={toggleTheme}
                   className="p-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
                 >
-                  {document.documentElement.classList.contains('dark') ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                  {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                 </button>
 
                 <button
@@ -144,7 +148,7 @@ function Header() {
                 </Link>
                 <Link
                   to="/login"
-                  className="px-6 py-2 bg-linear-to-r from-teal-500 to-green-500 text-white rounded-full hover:from-teal-600 hover:to-green-600 transition-all font-medium shadow-lg"
+                  className="px-6 py-2 bg-gradient-to-r from-teal-500 to-green-500 text-white rounded-full hover:from-teal-600 hover:to-green-600 transition-all font-medium shadow-lg"
                 >
                   Get Started
                 </Link>
@@ -172,7 +176,7 @@ function Header() {
             ) : (
               <Link
                 to="/login"
-                className="px-4 py-2 bg-linear-to-r from-teal-500 to-green-500 text-white rounded-full text-sm font-medium"
+                className="px-4 py-2 bg-gradient-to-r from-teal-500 to-green-500 text-white rounded-full text-sm font-medium"
               >
                 Get Started
               </Link>
