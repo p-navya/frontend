@@ -71,15 +71,15 @@ const StudyGroupsPage = () => {
     const isMember = (groupId) => myGroups.some(g => g.id === groupId);
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col font-sans transition-colors duration-300">
             {/* Header */}
-            <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-10">
+            <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 rounded-full transition">
-                            <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition">
+                            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                         </button>
-                        <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <h1 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
                             <Users className="w-5 h-5 text-green-600" />
                             Study Groups
                         </h1>
@@ -96,17 +96,17 @@ const StudyGroupsPage = () => {
             <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
 
                 {/* Tabs */}
-                <div className="flex gap-4 mb-8 border-b border-gray-200">
+                <div className="flex gap-4 mb-8 border-b border-gray-200 dark:border-gray-800">
                     <button
                         onClick={() => setActiveTab('browse')}
-                        className={`pb-3 px-1 font-medium text-sm transition relative ${activeTab === 'browse' ? 'text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`pb-3 px-1 font-medium text-sm transition relative ${activeTab === 'browse' ? 'text-green-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
                     >
                         Browse Public Groups
                         {activeTab === 'browse' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600 rounded-full"></span>}
                     </button>
                     <button
                         onClick={() => setActiveTab('my-groups')}
-                        className={`pb-3 px-1 font-medium text-sm transition relative ${activeTab === 'my-groups' ? 'text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`pb-3 px-1 font-medium text-sm transition relative ${activeTab === 'my-groups' ? 'text-green-600' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}`}
                     >
                         My Groups
                         {activeTab === 'my-groups' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-green-600 rounded-full"></span>}
@@ -117,27 +117,27 @@ const StudyGroupsPage = () => {
                 {activeTab === 'browse' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {groups.filter(g => g.type === 'public').map(group => (
-                            <div key={group.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
+                            <div key={group.id} className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
                                 <div className="flex justify-between items-start mb-4">
-                                    <div className={`p-3 rounded-xl ${isMember(group.id) ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}>
+                                    <div className={`p-3 rounded-xl ${isMember(group.id) ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400'}`}>
                                         <Users className="w-6 h-6" />
                                     </div>
-                                    <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600 flex items-center gap-1">
+                                    <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-gray-600 dark:text-gray-400 flex items-center gap-1">
                                         <Globe className="w-3 h-3" /> Public
                                     </span>
                                 </div>
-                                <h3 className="text-lg font-bold text-gray-900 mb-1">{group.name}</h3>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{group.name}</h3>
                                 <p className="text-sm text-green-600 font-medium mb-3">{group.subject}</p>
-                                <p className="text-sm text-gray-500 mb-6">{group.description}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{group.description}</p>
 
-                                <div className="flex items-center justify-between border-t border-gray-50 pt-4">
-                                    <span className="text-xs text-gray-500">{group.members} members</span>
+                                <div className="flex items-center justify-between border-t border-gray-50 dark:border-gray-700 pt-4">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">{group.members} members</span>
                                     {isMember(group.id) ? (
                                         <span className="text-sm font-semibold text-green-600 flex items-center gap-1"><MessageCircle className="w-4 h-4" /> Joined</span>
                                     ) : (
                                         <button
                                             onClick={() => handleJoinGroup(group)}
-                                            className="text-sm bg-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-gray-800 transition shadow-sm"
+                                            className="text-sm bg-gray-900 dark:bg-white dark:text-gray-900 text-white px-3 py-1.5 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition shadow-sm"
                                         >
                                             Join Group
                                         </button>
@@ -153,19 +153,19 @@ const StudyGroupsPage = () => {
                         {myGroups.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {myGroups.map(group => (
-                                    <div key={group.id} className="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-green-500 transition hover:shadow-md">
+                                    <div key={group.id} className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border-l-4 border-green-500 transition hover:shadow-md">
                                         <div className="flex justify-between items-start mb-4">
-                                            <div className="p-3 rounded-xl bg-green-50 text-green-600">
+                                            <div className="p-3 rounded-xl bg-green-50 dark:bg-green-900/30 text-green-600">
                                                 <Users className="w-6 h-6" />
                                             </div>
                                             {group.type === 'private' && (
-                                                <span className="text-xs px-2 py-1 bg-orange-100 text-orange-600 rounded flex items-center gap-1">
+                                                <span className="text-xs px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-300 rounded flex items-center gap-1">
                                                     <Lock className="w-3 h-3" /> Private
                                                 </span>
                                             )}
                                         </div>
-                                        <h3 className="text-lg font-bold text-gray-900 mb-1">{group.name}</h3>
-                                        <p className="text-sm text-gray-500 mb-4">{group.description}</p>
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{group.name}</h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">{group.description}</p>
                                         <button className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium flex items-center justify-center gap-2">
                                             <MessageCircle className="w-4 h-4" /> Open Chat
                                         </button>
@@ -174,11 +174,11 @@ const StudyGroupsPage = () => {
                             </div>
                         ) : (
                             <div className="text-center py-12">
-                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
+                                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
                                     <Users className="w-8 h-8" />
                                 </div>
-                                <h3 className="text-lg font-medium text-gray-900">No groups joined yet</h3>
-                                <p className="text-gray-500 mb-6">Browse public groups or create your own!</p>
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">No groups joined yet</h3>
+                                <p className="text-gray-500 dark:text-gray-400 mb-6">Browse public groups or create your own!</p>
                                 <button onClick={() => setActiveTab('browse')} className="text-green-600 font-semibold hover:underline">Browse Groups</button>
                             </div>
                         )}
@@ -188,29 +188,29 @@ const StudyGroupsPage = () => {
                 {/* Create Modal */}
                 {showCreateModal && (
                     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in duration-200 border border-transparent dark:border-gray-700">
                             <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-lg font-bold text-gray-900">Create Study Group</h3>
-                                <button onClick={() => setShowCreateModal(false)} className="p-2 hover:bg-gray-100 rounded-full text-gray-500">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Create Study Group</h3>
+                                <button onClick={() => setShowCreateModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full text-gray-500">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
                             <form onSubmit={handleCreateGroup} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Group Name</label>
-                                    <input name="name" required className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500" placeholder="e.g. Calculus Heroes" />
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Group Name</label>
+                                    <input name="name" required className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500" placeholder="e.g. Calculus Heroes" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-                                    <input name="subject" required className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500" placeholder="e.g. Mathematics" />
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject</label>
+                                    <input name="subject" required className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500" placeholder="e.g. Mathematics" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                    <textarea name="description" required className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500" placeholder="What's this group about?" rows="3" />
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                                    <textarea name="description" required className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500" placeholder="What's this group about?" rows="3" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Privacy</label>
-                                    <select name="type" className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 bg-white">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Privacy</label>
+                                    <select name="type" className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
                                         <option value="public">Public (Visible to all)</option>
                                         <option value="private">Private (Invite only)</option>
                                     </select>

@@ -43,15 +43,15 @@ const ResumePage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col font-sans transition-colors duration-300">
             {/* Header */}
-            <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-10">
+            <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 rounded-full transition">
-                            <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition">
+                            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                         </button>
-                        <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <h1 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
                             <Sparkles className="w-5 h-5 text-teal-600" />
                             Resume Architect
                         </h1>
@@ -65,24 +65,24 @@ const ResumePage = () => {
                 {step === 'selection' && (
                     <div className="flex flex-col items-center justify-center h-full min-h-[60vh] animate-in fade-in slide-in-from-bottom-4 duration-700">
                         <div className="text-center max-w-2xl mb-12">
-                            <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">Build Your Perfect Resume</h2>
-                            <p className="text-lg text-gray-600">Choose how you want to get started. Our AI can build a resume from scratch or analyze your existing one.</p>
+                            <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">Build Your Perfect Resume</h2>
+                            <p className="text-lg text-gray-600 dark:text-gray-400">Choose how you want to get started. Our AI can build a resume from scratch or analyze your existing one.</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
                             {/* Build Option */}
                             <div
                                 onClick={handleStartBuild}
-                                className="group bg-white rounded-3xl p-8 shadow-xl border border-gray-100 hover:border-teal-300 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden"
+                                className="group bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-700 hover:border-teal-300 dark:hover:border-teal-500 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden"
                             >
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                     <Sparkles className="w-32 h-32 text-teal-600" />
                                 </div>
-                                <div className="w-14 h-14 bg-teal-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                                <div className="w-14 h-14 bg-teal-100 dark:bg-teal-900/30 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                                     <Sparkles className="w-7 h-7 text-teal-600" />
                                 </div>
-                                <h3 className="text-2xl font-bold text-gray-900 mb-2">Build from Scratch</h3>
-                                <p className="text-gray-600 mb-6">Enter your details and let our AI draft a professional, ATS-optimized resume for you in seconds.</p>
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Build from Scratch</h3>
+                                <p className="text-gray-600 dark:text-gray-400 mb-6">Enter your details and let our AI draft a professional, ATS-optimized resume for you in seconds.</p>
                                 <span className="inline-flex items-center text-teal-600 font-semibold group-hover:gap-2 transition-all">
                                     Start Building <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
                                 </span>
@@ -91,7 +91,7 @@ const ResumePage = () => {
                             {/* Analyze Option */}
                             <div
                                 onClick={handleStartAnalyze}
-                                className="group bg-white rounded-3xl p-8 shadow-xl border border-gray-100 hover:border-purple-300 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden"
+                                className="group bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-500 hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden"
                             >
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                                     <FileText className="w-32 h-32 text-purple-600" />
@@ -110,31 +110,31 @@ const ResumePage = () => {
                 )}
 
                 {step === 'form' && (
-                    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-8 border border-gray-100 animate-in fade-in zoom-in duration-300">
+                    <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700 animate-in fade-in zoom-in duration-300">
                         <div className="mb-8">
-                            <h2 className="text-2xl font-bold text-gray-900">Tell us about yourself</h2>
-                            <p className="text-gray-600">We'll use this information to draft your resume.</p>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tell us about yourself</h2>
+                            <p className="text-gray-600 dark:text-gray-400">We'll use this information to draft your resume.</p>
                         </div>
 
                         <form onSubmit={handleFormSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2"><User className="w-4 h-4" /> Full Name</label>
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"><User className="w-4 h-4" /> Full Name</label>
                                     <input
                                         type="text"
                                         required
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-900 outline-none transition"
                                         placeholder="e.g. John Doe"
                                         value={formData.fullName}
                                         onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2"><Briefcase className="w-4 h-4" /> Target Role</label>
+                                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"><Briefcase className="w-4 h-4" /> Target Role</label>
                                     <input
                                         type="text"
                                         required
-                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition"
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-900 outline-none transition"
                                         placeholder="e.g. Software Engineer"
                                         value={formData.role}
                                         onChange={e => setFormData({ ...formData, role: e.target.value })}
@@ -143,11 +143,11 @@ const ResumePage = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Email Address</label>
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
                                 <input
                                     type="email"
                                     required
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-900 outline-none transition"
                                     placeholder="john@example.com"
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
@@ -155,9 +155,9 @@ const ResumePage = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Experience Highlights</label>
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Experience Highlights</label>
                                 <textarea
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition min-h-[100px]"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-900 outline-none transition min-h-[100px]"
                                     placeholder="Briefly describe your recent roles and achievements..."
                                     value={formData.experience}
                                     onChange={e => setFormData({ ...formData, experience: e.target.value })}
@@ -165,9 +165,9 @@ const ResumePage = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700 flex items-center gap-2"><GraduationCap className="w-4 h-4" /> Education</label>
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2"><GraduationCap className="w-4 h-4" /> Education</label>
                                 <textarea
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition min-h-[80px]"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-900 outline-none transition min-h-[80px]"
                                     placeholder="Degree, University, Graduation Year..."
                                     value={formData.education}
                                     onChange={e => setFormData({ ...formData, education: e.target.value })}
@@ -175,10 +175,10 @@ const ResumePage = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">Key Skills</label>
+                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Key Skills</label>
                                 <input
                                     type="text"
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 dark:focus:ring-teal-900 outline-none transition"
                                     placeholder="e.g. React, Node.js, Project Management..."
                                     value={formData.skills}
                                     onChange={e => setFormData({ ...formData, skills: e.target.value })}
@@ -189,7 +189,7 @@ const ResumePage = () => {
                                 <button
                                     type="button"
                                     onClick={() => setStep('selection')}
-                                    className="px-6 py-3 rounded-xl text-gray-600 font-semibold hover:bg-gray-100 transition"
+                                    className="px-6 py-3 rounded-xl text-gray-600 dark:text-gray-400 font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                                 >
                                     Cancel
                                 </button>

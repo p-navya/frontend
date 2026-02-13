@@ -119,8 +119,8 @@ function UserDashboard() {
         <span
           key={i}
           className={`p-1 rounded-full cursor-pointer transition-all w-8 h-8 flex items-center justify-center mx-auto ${isToday
-            ? 'bg-pink-500 text-white shadow-md shadow-pink-200'
-            : 'hover:bg-gray-100 text-gray-700'
+            ? 'bg-pink-500 text-white shadow-md shadow-pink-200 dark:shadow-pink-900/40'
+            : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
             }`}
         >
           {i}
@@ -311,10 +311,10 @@ function UserDashboard() {
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <div className="bg-gray-50 p-3 rounded-t-2xl rounded-br-2xl text-xs text-gray-600">
+                    <div className="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-t-2xl rounded-br-2xl text-xs text-gray-600 dark:text-gray-300">
                       Can you explain the theory of relativity?
                     </div>
-                    <div className="bg-indigo-50 p-3 rounded-t-2xl rounded-bl-2xl text-xs text-indigo-700 ml-auto max-w-[90%]">
+                    <div className="bg-indigo-50 dark:bg-indigo-900/30 p-3 rounded-t-2xl rounded-bl-2xl text-xs text-indigo-700 dark:text-indigo-300 ml-auto max-w-[90%]">
                       Sure! It essentially states that...
                     </div>
                   </div>
@@ -336,10 +336,10 @@ function UserDashboard() {
                   </div>
                   <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-1">Resume Architect</h3>
                   <p className="text-xs text-gray-500 dark:text-gray-300 mb-4">Build professional resumes with AI assistance.</p>
-                  <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2 overflow-hidden">
+                  <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-2 overflow-hidden">
                     <div className="bg-teal-500 h-full w-3/4 rounded-full"></div>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-400">
+                  <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500">
                     <span>Profile Strength</span>
                     <span>75%</span>
                   </div>
@@ -432,9 +432,9 @@ function UserDashboard() {
                       <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold">10</div>
                       <div className="flex-1">
                         <h4 className="font-bold text-gray-800 dark:text-gray-200 text-sm">Physics Mechanics</h4>
-                        <p className="text-xs text-gray-500">10:00 AM - 11:30 AM</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">10:00 AM - 11:30 AM</p>
                       </div>
-                      <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm group-hover:bg-blue-500 group-hover:text-white transition">
+                      <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 flex items-center justify-center shadow-sm group-hover:bg-blue-500 group-hover:text-white transition group-hover:border-transparent">
                         <Play className="w-3 h-3 ml-0.5 fill-current" />
                       </div>
                     </div>
@@ -442,9 +442,9 @@ function UserDashboard() {
                       <div className="w-12 h-12 rounded-2xl bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-300 flex items-center justify-center font-bold">12</div>
                       <div className="flex-1">
                         <h4 className="font-bold text-gray-800 dark:text-gray-200 text-sm">Design Principles</h4>
-                        <p className="text-xs text-gray-500">12:00 PM - 01:30 PM</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">12:00 PM - 01:30 PM</p>
                       </div>
-                      <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm group-hover:bg-pink-500 group-hover:text-white transition">
+                      <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 flex items-center justify-center shadow-sm group-hover:bg-pink-500 group-hover:text-white transition group-hover:border-transparent">
                         <Play className="w-3 h-3 ml-0.5 fill-current" />
                       </div>
                     </div>
@@ -530,7 +530,7 @@ function UserDashboard() {
                   </div>
                   <button
                     onClick={() => navigate('/wellness')}
-                    className="mt-6 w-full py-2 bg-pink-50 dark:bg-pink-900/30 text-pink-600 dark:text-pink-300 rounded-xl text-xs font-bold hover:bg-pink-100 dark:hover:bg-pink-900/50 transition flex items-center justify-center gap-2"
+                    className="mt-6 w-full py-2 bg-pink-50 dark:bg-pink-900/30 text-pink-600 dark:text-pink-300 rounded-xl text-xs font-bold hover:bg-pink-100 dark:hover:bg-pink-900/50 transition flex items-center justify-center gap-2 border border-transparent dark:border-pink-500/30"
                   >
                     <Heart className="w-3 h-3" /> Wellness Check-in
                   </button>
@@ -633,7 +633,7 @@ const ChatInterface = ({
   const showFileUpload = mode === 'resume-builder' || mode === 'student-helper'
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg h-[600px] flex flex-col">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg h-[600px] flex flex-col border border-transparent dark:border-gray-700">
       {/* Chat Header */}
       <div className={`${color} text-white p-4 rounded-t-2xl flex items-center gap-3`}>
         <Icon className="w-6 h-6" />
@@ -665,8 +665,8 @@ const ChatInterface = ({
             >
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === 'user'
-                  ? 'bg-purple-700 text-white'
-                  : 'bg-gray-100 text-gray-800'
+                  ? 'bg-purple-700 text-white shadow-md'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
                   }`}
               >
                 <p className="whitespace-pre-wrap">{msg.content}</p>

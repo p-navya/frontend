@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Mail, Lock, Eye, EyeOff, X } from 'lucide-react'
+import { Mail, Lock, Eye, EyeOff, X, User } from 'lucide-react'
 import { login as loginService, register as registerService, forgotPassword as forgotPasswordService } from '../../services/authService'
 import { useAuth } from '../../context/AuthContext'
 import Home from './Home'
@@ -25,6 +25,7 @@ function Login() {
 
   const [showSignUpPassword, setShowSignUpPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [signupSuccess, setSignupSuccess] = useState(false)
 
   // Sign In form state
   const [signInForm, setSignInForm] = useState({
@@ -97,7 +98,7 @@ function Login() {
         setError('')
         // Pre-fill email in sign in form
         setSignInForm({ email: registeredEmail, password: '' })
-        alert('Registration successful! Please sign in.')
+        setSignupSuccess(true)
       }
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.')
@@ -122,6 +123,13 @@ function Login() {
     })
   }
 
+  const handleSocialLogin = (provider) => {
+    // In a real app, this would redirect to your backend OAuth endpoint
+    // Example: window.location.href = `${import.meta.env.VITE_API_URL}/auth/${provider}`;
+    console.log(`Initiating social login with ${provider}`);
+    setError(`Social login with ${provider} is coming soon! Requires backend OAuth setup.`);
+  };
+
   const handleForgotPassword = async (e) => {
     e.preventDefault()
     if (!forgotEmail) return
@@ -131,11 +139,8 @@ function Login() {
 
     try {
       await forgotPasswordService(forgotEmail)
-      // Even if API fails (security practice), usually we show success or handle error. 
-      // Assuming API returns success if email exists or even if not (to prevent enumeration).
-      // If your API throws error for non-existent email, catch block handles it.
-      setForgotStatus({ type: 'success', message: 'If an account exists, a password reset link has been sent.' })
-      setForgotEmail('')
+      setForgotStatus({ type: 'success', message: 'Password reset link sent! Check your inbox to resend or reset.' })
+      // Keep forgotEmail so user can resend if needed
     } catch (err) {
       setForgotStatus({ type: 'error', message: err.message || 'Failed to send reset link.' })
     } finally {
@@ -149,147 +154,211 @@ function Login() {
       navigate('/signup')
     } else {
       navigate('/login')
+      setSignupSuccess(false)
     }
   }
+
+  const background = useMemo(() => (
+    <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-10 bg-black/10 backdrop-blur-md"></div>
+      <div className="w-full h-full pointer-events-none filter blur-sm transform scale-[1.02]">
+        <Home />
+      </div>
+    </div>
+  ), [])
 
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Blurred Background - Landing Page */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 z-10 bg-black/10 backdrop-blur-md"></div>
-        <div className="w-full h-full pointer-events-none filter blur-sm transform scale-[1.02]">
-          <Home />
-        </div>
-      </div>
+      {background}
 
       <div
         className="relative z-20 min-h-screen flex items-center justify-center p-4 overflow-hidden"
-        style={{ perspective: '1000px' }}
       >
-        <div className="relative w-full max-w-4xl h-[550px]">
-          <div
-            className={`relative w-full h-full transition-transform duration-700 ease-in-out [transform-style:preserve-3d] ${isFlipped ? '[transform:rotateY(180deg)]' : ''
-              }`}
-          >
+        <div className="relative w-full max-w-md">
+          <div className="bg-white/80 dark:bg-black/90 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-2xl shadow-2xl p-8 bg-gradient-to-br from-sky-400/10 via-green-400/10 to-blue-400/10">
 
-            {/* FRONT */}
-            <div className="absolute inset-0 [backface-visibility:hidden]">
-              <div className="flex h-full rounded-3xl overflow-hidden shadow-2xl">
+            {!isFlipped ? (
+              /* SIGN IN VIEW */
+              <div className="flex flex-col items-center">
+                <div className="h-12 flex items-center justify-center">
+                  <span className="font-['Pacifico'] text-4xl gradient-text animate-write drop-shadow-sm pb-1">
+                    hello..
+                  </span>
+                </div>
+                <h1 className="text-2xl font-bold mt-2 mb-2 text-gray-800 dark:text-white">Sign In</h1>
 
-                {/* SIGN IN */}
-                <div className="w-1/2 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center px-8">
-                  <h1 className="text-3xl font-bold mb-6 text-gray-800">Sign In</h1>
-
-                  {error && !isFlipped && (
-                    <div className="w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-                      {error}
-                    </div>
-                  )}
-
-                  <form onSubmit={handleSignIn} className="w-full flex flex-col items-center gap-4" autoComplete="off">
-
-                    {/* EMAIL */}
-                    <div className="relative w-full">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none z-10" />
-                      <input
-                        type="email"
-                        name="email"
-                        value={signInForm.email}
-                        onChange={handleSignInChange}
-                        placeholder="Email"
-                        required
-                        autoComplete="off"
-                        className="w-full h-14 pl-10 pr-4 rounded-full bg-gray-50
-                      text-gray-800 placeholder-gray-500
-                      focus:outline-none focus:bg-sky-50 transition border border-gray-100"
-                      />
-                    </div>
-
-                    {/* PASSWORD */}
-                    <div className="relative w-full">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none z-10" />
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        name="password"
-                        value={signInForm.password}
-                        onChange={handleSignInChange}
-                        placeholder="Password"
-                        required
-                        autoComplete="new-password"
-                        className="w-full h-14 pl-10 pr-10 rounded-full bg-gray-50
-                      text-gray-800 placeholder-gray-500
-                      focus:outline-none focus:bg-sky-50 transition border border-gray-100"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 z-10 focus:outline-none"
-                      >
-                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-
-                    <div className="w-full flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setShowForgotPassword(true)}
-                        className="text-sm text-gray-600 hover:text-gray-800 hover:underline"
-                      >
-                        Forget Your Password?
-                      </button>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full h-12 bg-gradient-to-r from-sky-400 to-green-400 text-white rounded-full font-bold hover:from-sky-500 hover:to-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-                    >
-                      {loading ? 'SIGNING IN...' : 'SIGN IN'}
-                    </button>
-                  </form>
+                {/* Social Icons */}
+                <div className="flex gap-4 mb-4">
+                  {/* Google */}
+                  <button
+                    onClick={() => handleSocialLogin('google')}
+                    className="w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition-transform bg-transparent border-none"
+                  >
+                    <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                    </svg>
+                  </button>
+                  {/* LinkedIn */}
+                  <button
+                    onClick={() => handleSocialLogin('linkedin')}
+                    className="w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition-transform bg-transparent border-none"
+                  >
+                    <svg className="w-6 h-6 text-[#0077b5] fill-current" viewBox="0 0 24 24">
+                      <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                    </svg>
+                  </button>
+                  {/* Microsoft */}
+                  <button
+                    onClick={() => handleSocialLogin('microsoft')}
+                    className="w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition-transform bg-transparent border-none"
+                  >
+                    <svg className="w-6 h-6" viewBox="0 0 23 23">
+                      <path fill="#f35325" d="M1 1h10v10H1z" />
+                      <path fill="#81bc06" d="M12 1h10v10H12z" />
+                      <path fill="#05a6f0" d="M1 12h10v10H1z" />
+                      <path fill="#ffba08" d="M12 12h10v10H12z" />
+                    </svg>
+                  </button>
+                  {/* GitHub */}
+                  <button
+                    onClick={() => handleSocialLogin('github')}
+                    className="w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition-transform bg-transparent border-none"
+                  >
+                    <svg className="w-6 h-6 text-gray-800 dark:text-white fill-current" viewBox="0 0 24 24">
+                      <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                    </svg>
+                  </button>
                 </div>
 
-                {/* RIGHT PANEL */}
-                <div className="w-1/2 bg-gradient-to-r from-sky-400 to-green-400 flex flex-col items-center justify-center text-white px-8">
-                  <h1 className="text-3xl font-bold mb-6">Hello Friend!</h1>
-                  <p className="text-center mb-8">
-                    Register with your personal details to use all site features
-                  </p>
+                <div className="w-full flex items-center justify-between mb-4">
+                  <div className="h-px bg-white/30 dark:bg-white/10 w-full"></div>
+                  <span className="text-gray-500 dark:text-gray-400 text-sm px-4 whitespace-nowrap">or</span>
+                  <div className="h-px bg-white/30 dark:bg-white/10 w-full"></div>
+                </div>
+
+                {error && (
+                  <div className="w-full mb-4 p-3 bg-red-100/90 border border-red-400 text-red-700 rounded-lg text-sm text-center">
+                    {error}
+                  </div>
+                )}
+
+                {signupSuccess && (
+                  <div className="w-full mb-4 p-3 bg-green-100/90 border border-green-400 text-green-700 rounded-lg text-sm text-center">
+                    Account created! Please sign in with your email.
+                  </div>
+                )}
+
+                <form onSubmit={handleSignIn} className="w-full flex flex-col items-center gap-4" autoComplete="off">
+                  {/* EMAIL */}
+                  <div className="relative w-full">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none z-10" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={signInForm.email}
+                      onChange={handleSignInChange}
+                      placeholder="Email"
+                      required
+                      autoComplete="off"
+                      className="w-full h-12 pl-12 pr-4 rounded-xl bg-white/50 dark:bg-black/30 text-gray-800 dark:text-white placeholder-gray-500 border border-gray-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white/80 dark:focus:bg-black/50 transition"
+                    />
+                  </div>
+
+                  {/* PASSWORD */}
+                  <div className="relative w-full">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none z-10" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={signInForm.password}
+                      onChange={handleSignInChange}
+                      placeholder="Password"
+                      required
+                      autoComplete="new-password"
+                      className="w-full h-12 pl-12 pr-12 rounded-xl bg-white/50 dark:bg-black/30 text-gray-800 dark:text-white placeholder-gray-500 border border-gray-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white/80 dark:focus:bg-black/50 transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 z-10 focus:outline-none"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+
+                  <div className="w-full flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotEmail(signInForm.email)
+                        setShowForgotPassword(true)
+                      }}
+                      className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:underline"
+                    >
+                      Forget Your Password?
+                    </button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-4/5 h-10 bg-gradient-to-r from-teal-500 to-green-500 text-white rounded-full font-bold hover:from-teal-600 hover:to-green-600 transition shadow-lg mt-2"
+                  >
+                    {loading ? 'Signing In...' : 'Sign In'}
+                  </button>
+                </form>
+
+                <div className="mt-4 text-center text-gray-600 dark:text-gray-300">
+                  Don't have an account?{' '}
                   <button
                     onClick={() => toggleView('signup')}
-                    className="px-8 py-3 border-2 rounded-full hover:bg-white hover:text-sky-500 transition font-bold"
+                    className="text-teal-600 dark:text-teal-400 font-bold hover:underline"
                   >
-                    SIGN UP
+                    Sign Up
                   </button>
                 </div>
               </div>
-            </div>
 
-            {/* BACK */}
-            <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-              <div className="flex h-full rounded-3xl overflow-hidden shadow-2xl">
+            ) : (
+              /* SIGN UP VIEW */
+              <div className="flex flex-col items-center">
+                <div className="h-12 flex items-center justify-center">
+                  <span className="font-['Pacifico'] text-4xl gradient-text animate-write drop-shadow-sm pb-1">
+                    hello..
+                  </span>
+                </div>
+                <h1 className="text-2xl font-bold mt-2 mb-2 text-gray-800 dark:text-white">Create Account</h1>
 
-                {/* SIGN UP */}
-                <div className="w-1/2 bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center px-8">
-                  <h1 className="text-3xl font-bold mb-6 text-gray-800 text-center">Create Account</h1>
 
-                  {error && isFlipped && (
-                    <div className="w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-                      {error}
-                    </div>
-                  )}
 
-                  <form onSubmit={handleSignUp} className="w-full flex flex-col items-center gap-4" autoComplete="off">
+                {error && (
+                  <div className="w-full mb-4 p-3 bg-red-100/90 border border-red-400 text-red-700 rounded-lg text-sm text-center">
+                    {error}
+                  </div>
+                )}
+
+                <form onSubmit={handleSignUp} className="w-full flex flex-col items-center gap-4" autoComplete="off">
+                  {/* NAME */}
+                  <div className="relative w-full">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none z-10" />
                     <input
                       type="text"
                       name="name"
                       value={signUpForm.name}
                       onChange={handleSignUpChange}
-                      placeholder="Name"
+                      placeholder="Full Name"
                       required
                       autoComplete="off"
-                      className="w-full h-14 px-6 rounded-full bg-gray-50 focus:outline-none focus:bg-sky-50 transition border border-gray-100"
+                      className="w-full h-12 pl-12 pr-4 rounded-xl bg-white/50 dark:bg-black/30 text-gray-800 dark:text-white placeholder-gray-500 border border-gray-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white/80 dark:focus:bg-black/50 transition"
                     />
+                  </div>
+                  {/* EMAIL */}
+                  <div className="relative w-full">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none z-10" />
                     <input
                       type="email"
                       name="email"
@@ -298,77 +367,74 @@ function Login() {
                       placeholder="Email"
                       required
                       autoComplete="off"
-                      className="w-full h-14 px-6 rounded-full bg-gray-50 focus:outline-none focus:bg-sky-50 transition border border-gray-100"
+                      className="w-full h-12 pl-12 pr-4 rounded-xl bg-white/50 dark:bg-black/30 text-gray-800 dark:text-white placeholder-gray-500 border border-gray-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white/80 dark:focus:bg-black/50 transition"
                     />
+                  </div>
 
-                    {/* Password */}
-                    <div className="relative w-full">
-                      <input
-                        type={showSignUpPassword ? "text" : "password"}
-                        name="password"
-                        value={signUpForm.password}
-                        onChange={handleSignUpChange}
-                        placeholder="Password"
-                        required
-                        autoComplete="new-password"
-                        className="w-full h-14 px-6 rounded-full bg-gray-50 focus:outline-none focus:bg-sky-50 transition border border-gray-100"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowSignUpPassword(!showSignUpPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 z-10 focus:outline-none"
-                      >
-                        {showSignUpPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-
-                    {/* Confirm Password */}
-                    <div className="relative w-full">
-                      <input
-                        type={showConfirmPassword ? "text" : "password"}
-                        name="confirmPassword"
-                        value={signUpForm.confirmPassword}
-                        onChange={handleSignUpChange}
-                        placeholder="Confirm Password"
-                        required
-                        autoComplete="new-password"
-                        className="w-full h-14 px-6 rounded-full bg-gray-50 focus:outline-none focus:bg-sky-50 transition border border-gray-100"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 z-10 focus:outline-none"
-                      >
-                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                      </button>
-                    </div>
-
+                  {/* PASSWORD */}
+                  <div className="relative w-full">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none z-10" />
+                    <input
+                      type={showSignUpPassword ? "text" : "password"}
+                      name="password"
+                      value={signUpForm.password}
+                      onChange={handleSignUpChange}
+                      placeholder="Password"
+                      required
+                      autoComplete="new-password"
+                      className="w-full h-12 pl-12 pr-12 rounded-xl bg-white/50 dark:bg-black/30 text-gray-800 dark:text-white placeholder-gray-500 border border-gray-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white/80 dark:focus:bg-black/50 transition"
+                    />
                     <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full h-12 bg-gradient-to-r from-sky-400 to-green-400 text-white rounded-full font-bold hover:from-sky-500 hover:to-green-500 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                      type="button"
+                      onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 z-10 focus:outline-none"
                     >
-                      {loading ? 'SIGNING UP...' : 'SIGN UP'}
+                      {showSignUpPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
-                  </form>
-                </div>
+                  </div>
 
-                {/* WELCOME BACK */}
-                <div className="w-1/2 bg-gradient-to-r from-sky-500 to-green-500 flex flex-col items-center justify-center text-white px-8">
-                  <h1 className="text-3xl font-bold mb-6">Welcome Back!</h1>
-                  <p className="mb-8 text-center">
-                    Enter your details to use all site features
-                  </p>
+                  {/* CONFIRM PASSWORD */}
+                  <div className="relative w-full">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none z-10" />
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      name="confirmPassword"
+                      value={signUpForm.confirmPassword}
+                      onChange={handleSignUpChange}
+                      placeholder="Re-enter Password"
+                      required
+                      autoComplete="new-password"
+                      className="w-full h-12 pl-12 pr-12 rounded-xl bg-white/50 dark:bg-black/30 text-gray-800 dark:text-white placeholder-gray-500 border border-gray-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white/80 dark:focus:bg-black/50 transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 z-10 focus:outline-none"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-4/5 h-10 bg-gradient-to-r from-teal-500 to-green-500 text-white rounded-full font-bold hover:from-teal-600 hover:to-green-600 transition shadow-lg mt-2"
+                  >
+                    {loading ? 'Signing Up...' : 'Sign Up'}
+                  </button>
+                </form>
+
+                <div className="mt-4 text-center text-gray-600 dark:text-gray-300">
+                  Already have an account?{' '}
                   <button
                     onClick={() => toggleView('login')}
-                    className="px-8 py-3 border-2 rounded-full hover:bg-white hover:text-sky-500 transition font-bold"
+                    className="text-teal-600 dark:text-teal-400 font-bold hover:underline"
                   >
-                    SIGN IN
+                    Sign In
                   </button>
                 </div>
               </div>
-            </div>
-
+            )}
           </div>
         </div>
       </div>

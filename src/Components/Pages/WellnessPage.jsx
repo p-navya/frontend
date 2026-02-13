@@ -15,10 +15,10 @@ const WellnessPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 font-sans">
+        <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-900 dark:to-slate-900 font-sans transition-colors duration-300">
             {/* Header */}
-            <header className="px-6 py-4 flex items-center gap-4 sticky top-0 bg-white/60 backdrop-blur-md z-10">
-                <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-white/80 rounded-full transition text-gray-600">
+            <header className="px-6 py-4 flex items-center gap-4 sticky top-0 bg-white/60 dark:bg-gray-900/60 backdrop-blur-md z-10 border-b border-transparent dark:border-gray-800">
+                <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-white/80 dark:hover:bg-gray-800 rounded-full transition text-gray-600 dark:text-gray-400">
                     <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div className="flex items-center gap-2 text-pink-600 font-bold text-xl">
@@ -30,13 +30,13 @@ const WellnessPage = () => {
             <main className="max-w-4xl mx-auto px-6 py-10">
                 {/* Hero Greeting */}
                 <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <div className="inline-block p-3 bg-pink-100 rounded-full mb-4">
+                    <div className="inline-block p-3 bg-pink-100 dark:bg-pink-900/30 rounded-full mb-4">
                         <Smile className="w-8 h-8 text-pink-500" />
                     </div>
-                    <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 mb-4 tracking-tight">
+                    <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 dark:text-white mb-4 tracking-tight">
                         How are you feeling today?
                     </h1>
-                    <p className="text-lg text-gray-600 max-w-xl mx-auto">
+                    <p className="text-lg text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
                         It's okay to have ups and downs. I'm here to listen, motivate, or just chat whenever you need a boost.
                     </p>
                 </div>
@@ -46,16 +46,16 @@ const WellnessPage = () => {
                     {/* Motivation */}
                     <button
                         onClick={() => handleAction('motivation', 'I need some motivation. Can you give me a pep talk?')}
-                        className="group bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all border border-pink-100 text-left relative overflow-hidden"
+                        className="group bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all border border-pink-100 dark:border-gray-700 text-left relative overflow-hidden"
                     >
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition">
                             <Sun className="w-32 h-32 text-orange-500" />
                         </div>
-                        <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mb-6 text-orange-500">
+                        <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center mb-6 text-orange-500">
                             <Sun className="w-6 h-6" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Need Motivation?</h3>
-                        <p className="text-gray-500 mb-4">Get a boost of positivity and energy to keep going.</p>
+                        <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Need Motivation?</h3>
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">Get a boost of positivity and energy to keep going.</p>
                         <div className="flex items-center text-orange-500 font-semibold group-hover:gap-2 transition-all">
                             Get Inspired <ArrowRight className="w-4 h-4 ml-1" />
                         </div>
@@ -64,16 +64,16 @@ const WellnessPage = () => {
                     {/* Venting / Stress */}
                     <button
                         onClick={() => handleAction('vent', 'I have been feeling stressed lately. I want to talk about it.')}
-                        className="group bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all border border-pink-100 text-left relative overflow-hidden"
+                        className="group bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all border border-pink-100 dark:border-gray-700 text-left relative overflow-hidden"
                     >
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition">
                             <CloudRain className="w-32 h-32 text-blue-500" />
                         </div>
-                        <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 text-blue-500">
+                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6 text-blue-500">
                             <CloudRain className="w-6 h-6" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Feeling Stressed?</h3>
-                        <p className="text-gray-500 mb-4">Share what's on your mind. No judgment, just support.</p>
+                        <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Feeling Stressed?</h3>
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">Share what's on your mind. No judgment, just support.</p>
                         <div className="flex items-center text-blue-500 font-semibold group-hover:gap-2 transition-all">
                             Let it Out <ArrowRight className="w-4 h-4 ml-1" />
                         </div>
@@ -82,16 +82,16 @@ const WellnessPage = () => {
                     {/* Casual Chat */}
                     <button
                         onClick={() => handleAction('chat', 'Hi! I just wanted to chat for a bit.')}
-                        className="group bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all border border-pink-100 text-left relative overflow-hidden"
+                        className="group bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all border border-pink-100 dark:border-gray-700 text-left relative overflow-hidden"
                     >
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition">
                             <Coffee className="w-32 h-32 text-purple-500" />
                         </div>
-                        <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 text-purple-500">
+                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mb-6 text-purple-500">
                             <Coffee className="w-6 h-6" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Just Chatting</h3>
-                        <p className="text-gray-500 mb-4">Take a break and have a casual, friendly conversation.</p>
+                        <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Just Chatting</h3>
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">Take a break and have a casual, friendly conversation.</p>
                         <div className="flex items-center text-purple-500 font-semibold group-hover:gap-2 transition-all">
                             Start Chat <ArrowRight className="w-4 h-4 ml-1" />
                         </div>
@@ -100,16 +100,16 @@ const WellnessPage = () => {
                     {/* Anxiety Helper */}
                     <button
                         onClick={() => handleAction('anxiety', 'I am feeling anxious. Can you help me calm down?')}
-                        className="group bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all border border-pink-100 text-left relative overflow-hidden"
+                        className="group bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-sm hover:shadow-xl hover:scale-[1.02] transition-all border border-pink-100 dark:border-gray-700 text-left relative overflow-hidden"
                     >
                         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition">
                             <Sparkles className="w-32 h-32 text-teal-500" />
                         </div>
-                        <div className="w-12 h-12 bg-teal-100 rounded-2xl flex items-center justify-center mb-6 text-teal-500">
+                        <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-2xl flex items-center justify-center mb-6 text-teal-500">
                             <Sparkles className="w-6 h-6" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-2">Anxiety Relief</h3>
-                        <p className="text-gray-500 mb-4">Simple breathing exercises and calming techniques.</p>
+                        <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Anxiety Relief</h3>
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">Simple breathing exercises and calming techniques.</p>
                         <div className="flex items-center text-teal-500 font-semibold group-hover:gap-2 transition-all">
                             Find Calm <ArrowRight className="w-4 h-4 ml-1" />
                         </div>

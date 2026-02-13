@@ -15,19 +15,19 @@ const Home = () => {
       <Navbar />
       <main>
         <Hero />
-        <section id="modules">
+        <section id="modules" className="scroll-mt-16">
           <ModulesSection />
         </section>
-        <section id="features">
+        <section id="features" className="scroll-mt-16">
           <FeaturesSection />
         </section>
-        <section id="how-it-works">
+        <section id="how-it-works" className="scroll-mt-16">
           <HowItWorksSection />
         </section>
-        <section id="resources">
+        <section id="resources" className="scroll-mt-16">
           <ResourcesSection />
         </section>
-        <section id="pricing">
+        <section id="pricing" className="scroll-mt-16">
           <PricingSection />
         </section>
         <CTASection />

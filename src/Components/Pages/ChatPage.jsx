@@ -189,14 +189,14 @@ const ChatPage = () => {
     };
 
     return (
-        <div className="flex h-screen bg-white text-gray-800 font-sans overflow-hidden">
+        <div className="flex h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans overflow-hidden transition-colors duration-300">
 
             {/* Sidebar - ChatGPT Style */}
-            <div className={`${sidebarOpen ? 'w-64' : 'w-0'} bg-gray-50 transition-all duration-300 flex flex-col border-r border-gray-200 relative z-20`}>
+            <div className={`${sidebarOpen ? 'w-64' : 'w-0'} bg-gray-50 dark:bg-gray-800 transition-all duration-300 flex flex-col border-r border-gray-200 dark:border-gray-700 relative z-20`}>
                 <div className="p-3">
                     <button
                         onClick={() => navigate('/dashboard')}
-                        className="flex items-center gap-3 w-full px-3 py-3 rounded-md hover:bg-gray-200 transition text-sm text-gray-700 bg-transparent border border-transparent font-medium"
+                        className="flex items-center gap-3 w-full px-3 py-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition text-sm text-gray-700 dark:text-gray-300 bg-transparent border border-transparent font-medium"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         Back to Dashboard
@@ -204,7 +204,7 @@ const ChatPage = () => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2" onClick={() => setActiveMenuChatId(null)}>
-                    <div className="text-xs font-medium text-gray-500 mb-2 px-2">Chats</div>
+                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2">Chats</div>
                     {chatHistory.length === 0 ? (
                         <div className="text-sm text-gray-400 px-2 italic">No previous chats</div>
                     ) : (
@@ -212,7 +212,7 @@ const ChatPage = () => {
                             <div
                                 key={chat.id}
                                 onClick={() => loadChat(chat)}
-                                className={`group relative flex items-center justify-between px-3 py-3 rounded-md cursor-pointer text-sm transition ${currentChatId === chat.id ? 'bg-gray-200 text-gray-900' : 'hover:bg-gray-100 text-gray-700'}`}
+                                className={`group relative flex items-center justify-between px-3 py-3 rounded-md cursor-pointer text-sm transition ${currentChatId === chat.id ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'}`}
                             >
                                 <div className="flex items-center gap-2 overflow-hidden w-full">
                                     <MessageSquare className="w-4 h-4 text-gray-500 shrink-0" />
@@ -222,7 +222,7 @@ const ChatPage = () => {
                                                 type="text"
                                                 value={newChatTitle}
                                                 onChange={(e) => setNewChatTitle(e.target.value)}
-                                                className="w-full bg-white border border-gray-300 rounded px-1 py-0.5 text-xs focus:outline-none focus:border-teal-500"
+                                                className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 text-xs focus:outline-none focus:border-teal-500 dark:text-white"
                                                 autoFocus
                                             />
                                             <button onClick={saveRename} className="p-1 hover:bg-gray-200 rounded text-green-600">
@@ -247,10 +247,10 @@ const ChatPage = () => {
                                         </button>
 
                                         {activeMenuChatId === chat.id && (
-                                            <div className="absolute right-0 top-6 w-32 bg-white shadow-xl rounded-md border border-gray-100 z-50 overflow-hidden py-1">
+                                            <div className="absolute right-0 top-6 w-32 bg-white dark:bg-gray-800 shadow-xl rounded-md border border-gray-100 dark:border-gray-700 z-50 overflow-hidden py-1">
                                                 <button
                                                     onClick={(e) => startRenaming(e, chat)}
-                                                    className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                    className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
                                                 >
                                                     <Edit className="w-3 h-3" /> Rename
                                                 </button>
@@ -262,7 +262,7 @@ const ChatPage = () => {
                                                 </button>
                                                 <button
                                                     onClick={(e) => deleteChat(e, chat.id)}
-                                                    className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                    className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
                                                 >
                                                     <Trash2 className="w-3 h-3" /> Delete
                                                 </button>
@@ -279,7 +279,7 @@ const ChatPage = () => {
                 <div className="p-3 border-t border-gray-200">
                     <button
                         onClick={() => { setMessages([]); setInputMessage(''); setCurrentChatId(null); }}
-                        className="flex items-center gap-3 w-full px-3 py-3 rounded-md border border-gray-200 hover:bg-gray-100 transition text-sm text-gray-700 bg-white shadow-sm"
+                        className="flex items-center gap-3 w-full px-3 py-3 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
                         New Chat
@@ -288,15 +288,15 @@ const ChatPage = () => {
             </div>
 
             {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col relative w-full bg-white">
+            <div className="flex-1 flex flex-col relative w-full bg-white dark:bg-gray-900 transition-colors duration-300">
                 {/* Header for Chat Page */}
-                <div className="h-16 border-b border-gray-100 flex items-center justify-between px-4 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+                <div className="h-16 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2">
                             <div className="w-8 h-8 bg-linear-to-br from-teal-500 to-green-500 rounded-lg flex items-center justify-center">
                                 <Bot className="w-5 h-5 text-white" />
                             </div>
-                            <span className="font-bold text-lg text-gray-800">StudyBuddyAI</span>
+                            <span className="font-bold text-lg text-gray-800 dark:text-white">StudyBuddyAI</span>
                         </div>
                     </div>
                 </div>
@@ -308,10 +308,10 @@ const ChatPage = () => {
                 <div className="flex-1 overflow-y-auto relative scroll-smooth">
                     {messages.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-0 animate-in fade-in zoom-in duration-500 fill-mode-forwards" style={{ opacity: 1 }}>
-                            <div className="w-16 h-16 bg-white rounded-2xl shadow-lg border border-gray-100 flex items-center justify-center mb-6">
+                            <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 flex items-center justify-center mb-6">
                                 <Bot className="w-8 h-8 text-teal-600" />
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-800 mb-2">How can I help you today?</h2>
+                            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">How can I help you today?</h2>
                         </div>
                     ) : (
                         <div className="flex flex-col items-center w-full py-10">
@@ -321,8 +321,8 @@ const ChatPage = () => {
                                         {msg.role === 'assistant' ? <Bot className="w-5 h-5 text-white" /> : <span className="text-white font-bold text-xs">U</span>}
                                     </div>
                                     <div className="flex-1 space-y-2">
-                                        <div className="font-semibold text-sm text-gray-800 mb-1">{msg.role === 'assistant' ? 'StudyBuddy' : 'You'}</div>
-                                        <div className="leading-relaxed text-gray-700 whitespace-pre-wrap">{msg.content}</div>
+                                        <div className="font-semibold text-sm text-gray-800 dark:text-gray-200 mb-1">{msg.role === 'assistant' ? 'StudyBuddy' : 'You'}</div>
+                                        <div className="leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{msg.content}</div>
                                     </div>
                                 </div>
                             ))}
@@ -347,17 +347,17 @@ const ChatPage = () => {
                 <div className="w-full shrink-0 pb-6 px-4">
                     <div className="max-w-3xl mx-auto relative">
                         {selectedFile && (
-                            <div className="absolute -top-12 left-0 bg-white text-gray-700 px-3 py-2 rounded-lg flex items-center gap-2 shadow-md border border-gray-200">
+                            <div className="absolute -top-12 left-0 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg flex items-center gap-2 shadow-md border border-gray-200 dark:border-gray-700">
                                 <Paperclip className="w-4 h-4 text-teal-600" />
                                 <span className="text-sm truncate max-w-[200px] font-medium">{selectedFile.name}</span>
                                 <button onClick={() => setSelectedFile(null)} className="hover:text-red-500"><X className="w-4 h-4" /></button>
                             </div>
                         )}
 
-                        <div className="flex items-end gap-2 bg-white rounded-xl p-3 shadow-lg border border-gray-200 focus-within:border-teal-500">
+                        <div className="flex items-end gap-2 bg-white dark:bg-gray-800 rounded-xl p-3 shadow-lg border border-gray-200 dark:border-gray-700 focus-within:border-teal-500">
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="p-2 text-gray-400 hover:text-teal-600 transition"
+                                className="p-2 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition"
                                 title="Upload PDF"
                             >
                                 <Paperclip className="w-5 h-5" />
@@ -381,7 +381,7 @@ const ChatPage = () => {
                                 }}
                                 style={{ height: '24px', maxHeight: '200px' }}
                                 placeholder="Message StudyBuddy..."
-                                className="flex-1 bg-transparent text-gray-800 focus:outline-none resize-none overflow-hidden py-0 my-1 max-h-[200px] placeholder-gray-400"
+                                className="flex-1 bg-transparent text-gray-800 dark:text-gray-200 focus:outline-none resize-none overflow-hidden py-0 my-1 max-h-[200px] placeholder-gray-400 dark:placeholder-gray-500"
                                 disabled={loading}
                                 rows={1}
                                 onInput={(e) => {

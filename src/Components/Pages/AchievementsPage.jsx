@@ -91,13 +91,13 @@ const AchievementsPage = () => {
     const getTotalXP = () => history.reduce((sum, item) => sum + item.xp, 0);
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col font-sans transition-colors duration-300">
             {/* Header */}
-            <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-10 px-6 py-4 flex items-center gap-4">
-                <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 rounded-full transition text-gray-600">
+            <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10 px-6 py-4 flex items-center gap-4">
+                <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition text-gray-600 dark:text-gray-400">
                     <ArrowLeft className="w-5 h-5" />
                 </button>
-                <div className="flex items-center gap-2 text-purple-700 font-bold text-xl">
+                <div className="flex items-center gap-2 text-purple-700 dark:text-purple-400 font-bold text-xl">
                     <Award className="w-6 h-6 fill-current" />
                     <span>Achievements & Tests</span>
                 </div>
@@ -124,19 +124,19 @@ const AchievementsPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {/* Available Tests */}
                             <section>
-                                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                                     <Clock className="w-5 h-5 text-purple-600" /> Available Mock Tests
                                 </h3>
                                 <div className="space-y-4">
                                     {tests.map(test => (
-                                        <div key={test.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition flex items-center justify-between group">
+                                        <div key={test.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition flex items-center justify-between group">
                                             <div>
-                                                <h4 className="font-bold text-gray-800">{test.title}</h4>
-                                                <p className="text-sm text-gray-500">{test.subject} • {test.duration} • {test.questions.length} Questions</p>
+                                                <h4 className="font-bold text-gray-800 dark:text-white">{test.title}</h4>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">{test.subject} • {test.duration} • {test.questions.length} Questions</p>
                                             </div>
                                             <button
                                                 onClick={() => startTest(test)}
-                                                className="bg-purple-100 text-purple-700 p-3 rounded-full hover:bg-purple-600 hover:text-white transition"
+                                                className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 p-3 rounded-full hover:bg-purple-600 hover:text-white transition"
                                             >
                                                 <Play className="w-5 h-5 fill-current" />
                                             </button>
@@ -147,28 +147,28 @@ const AchievementsPage = () => {
 
                             {/* Recent Activity */}
                             <section>
-                                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center gap-2">
                                     <BarChart2 className="w-5 h-5 text-indigo-600" /> Recent History
                                 </h3>
                                 <div className="space-y-4">
                                     {history.length > 0 ? (
                                         history.slice(0, 5).map(record => (
-                                            <div key={record.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+                                            <div key={record.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center justify-between">
                                                 <div>
-                                                    <h4 className="font-semibold text-gray-800">{record.testName}</h4>
-                                                    <p className="text-xs text-gray-400">{record.date}</p>
+                                                    <h4 className="font-semibold text-gray-800 dark:text-white">{record.testName}</h4>
+                                                    <p className="text-xs text-gray-400 dark:text-gray-500">{record.date}</p>
                                                 </div>
                                                 <div className="text-right">
                                                     <div className={`font-bold text-lg ${record.score >= 80 ? 'text-green-600' : record.score >= 50 ? 'text-orange-500' : 'text-red-500'}`}>
                                                         {record.score}%
                                                     </div>
-                                                    <div className="text-xs font-bold text-purple-600">+{record.xp} XP</div>
+                                                    <div className="text-xs font-bold text-purple-600 dark:text-purple-400">+{record.xp} XP</div>
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="text-center p-8 bg-white rounded-xl border border-dashed border-gray-200">
-                                            <p className="text-gray-500">No tests taken yet.</p>
+                                        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
+                                            <p className="text-gray-500 dark:text-gray-400">No tests taken yet.</p>
                                         </div>
                                     )}
                                 </div>
@@ -180,18 +180,18 @@ const AchievementsPage = () => {
                 {view === 'test' && activeTest && (
                     <div className="max-w-2xl mx-auto">
                         <div className="mb-6 flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Question {currentQuestionIndex + 1} of {activeTest.questions.length}</span>
-                            <button onClick={() => setView('list')} className="text-gray-400 hover:text-red-500"><X className="w-6 h-6" /></button>
+                            <span className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Question {currentQuestionIndex + 1} of {activeTest.questions.length}</span>
+                            <button onClick={() => setView('list')} className="text-gray-400 dark:text-gray-500 hover:text-red-500"><X className="w-6 h-6" /></button>
                         </div>
 
-                        <div className="bg-white rounded-3xl p-8 shadow-lg border border-gray-100 mb-8">
-                            <h3 className="text-2xl font-bold text-gray-800 mb-8">{activeTest.questions[currentQuestionIndex].q}</h3>
+                        <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
+                            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-8">{activeTest.questions[currentQuestionIndex].q}</h3>
                             <div className="space-y-3">
                                 {activeTest.questions[currentQuestionIndex].options.map((opt, idx) => (
                                     <button
                                         key={idx}
                                         onClick={() => handleAnswer(idx)}
-                                        className={`w-full text-left p-4 rounded-xl border-2 transition font-medium ${answers[currentQuestionIndex] === idx ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-100 hover:border-purple-200 text-gray-700'}`}
+                                        className={`w-full text-left p-4 rounded-xl border-2 transition font-medium ${answers[currentQuestionIndex] === idx ? 'border-purple-600 dark:border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300' : 'border-gray-100 dark:border-gray-700 hover:border-purple-200 dark:hover:border-purple-900/50 text-gray-700 dark:text-gray-300'}`}
                                     >
                                         {opt}
                                     </button>
@@ -203,7 +203,7 @@ const AchievementsPage = () => {
                             <button
                                 disabled={currentQuestionIndex === 0}
                                 onClick={() => setCurrentQuestionIndex(curr => curr - 1)}
-                                className="px-6 py-3 rounded-xl font-semibold text-gray-500 disabled:opacity-30 hover:bg-gray-100 transition"
+                                className="px-6 py-3 rounded-xl font-semibold text-gray-500 dark:text-gray-400 disabled:opacity-30 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                             >
                                 Previous
                             </button>
@@ -229,19 +229,19 @@ const AchievementsPage = () => {
 
                 {view === 'result' && (
                     <div className="max-w-md mx-auto text-center pt-10 animate-in zoom-in duration-500">
-                        <div className="inline-block p-6 rounded-full bg-yellow-100 mb-6 relative">
+                        <div className="inline-block p-6 rounded-full bg-yellow-100 dark:bg-yellow-900/30 mb-6 relative">
                             <Trophy className="w-16 h-16 text-yellow-500" />
                             <div className="absolute top-0 right-0 animate-bounce">
                                 <Star className="w-8 h-8 text-yellow-400 fill-current" />
                             </div>
                         </div>
-                        <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Test Completed!</h2>
-                        <p className="text-gray-500 mb-8">You finished {activeTest.title}</p>
+                        <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">Test Completed!</h2>
+                        <p className="text-gray-500 dark:text-gray-400 mb-8">You finished {activeTest.title}</p>
 
-                        <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-100 mb-8">
-                            <div className="text-sm text-gray-500 uppercase tracking-widest font-semibold mb-2">Your Score</div>
-                            <div className="text-6xl font-black text-purple-600 mb-4">{score}%</div>
-                            <div className="inline-flex items-center gap-1 bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-bold">
+                        <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl border border-gray-100 dark:border-gray-700 mb-8">
+                            <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-widest font-semibold mb-2">Your Score</div>
+                            <div className="text-6xl font-black text-purple-600 dark:text-purple-400 mb-4">{score}%</div>
+                            <div className="inline-flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full text-sm font-bold">
                                 +{score * 10} XP Earned
                             </div>
                         </div>
@@ -249,13 +249,13 @@ const AchievementsPage = () => {
                         <div className="flex flex-col gap-3">
                             <button
                                 onClick={() => setView('list')} // Back to list
-                                className="w-full py-4 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition shadow-lg"
+                                className="w-full py-4 bg-gray-900 dark:bg-white dark:text-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition shadow-lg"
                             >
                                 Back to Achievements
                             </button>
                             <button
                                 onClick={() => startTest(activeTest)} // Retry
-                                className="w-full py-4 bg-white text-gray-700 border border-gray-200 rounded-xl font-bold hover:bg-gray-50 transition"
+                                className="w-full py-4 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition"
                             >
                                 Retry Test
                             </button>
