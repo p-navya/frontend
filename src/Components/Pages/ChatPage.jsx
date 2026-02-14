@@ -1,43 +1,85 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Bot, X, ArrowLeft, Plus, History, MessageSquare, Menu, MoreVertical, Edit, Trash2, Share2, Check } from 'lucide-react';
+import { Send, Paperclip, Bot, X, ArrowLeft, Plus, History, MessageSquare, Menu, MoreVertical, Edit, Trash2, Share2, Check, Sparkles, RefreshCcw, Smile, User, Brain } from 'lucide-react';
 import { sendChatMessage } from '../../services/chatbotService';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+
+console.log("ChatPage Revamp v4 Loaded - Intelligence & History Update");
 
 const ChatPage = () => {
+    const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
     const [loading, setLoading] = useState(false);
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [chatHistory, setChatHistory] = useState([]);
     const [currentChatId, setCurrentChatId] = useState(null);
     const [activeMenuChatId, setActiveMenuChatId] = useState(null);
     const [editingChatId, setEditingChatId] = useState(null);
     const [newChatTitle, setNewChatTitle] = useState('');
+    const [currentMode, setCurrentMode] = useState('studybuddy-ai');
+
+    const modes = [
+        { id: 'studybuddy-ai', label: 'StudyBuddy AI', icon: Bot, color: 'text-blue-600', bg: 'bg-blue-600/10' },
+        { id: 'student-helper', label: 'Academic Assistant', icon: Brain, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+        { id: 'mental-support', label: 'Mental Support', icon: Smile, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+        { id: 'resume-builder', label: 'Resume Architect', icon: Sparkles, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    ];
 
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
 
-    // Load history from local storage on mount
+    const [displaySuggestions, setDisplaySuggestions] = useState([
+        { label: "Deep dive into Calculus", prompt: "Explain the fundamental theorem of calculus in simple terms." },
+        { label: "Study plan for finals", prompt: "Create a 2-week study plan for my upcoming finals." },
+        { label: "Summarize my notes", prompt: "I'll upload a PDF of my notes, can you summarize the key concepts?" },
+        { label: "Practice quiz help", prompt: "Give me 5 practice questions about cellular biology." }
+    ]);
+
+    const allSuggestions = [
+        { label: "Deep dive into Calculus", prompt: "Explain the fundamental theorem of calculus in simple terms." },
+        { label: "Study plan for finals", prompt: "Create a 2-week study plan for my upcoming finals." },
+        { label: "Summarize my notes", prompt: "I'll upload a PDF of my notes, can you summarize the key concepts?" },
+        { label: "Practice quiz help", prompt: "Give me 5 practice questions about cellular biology." },
+        { label: "History Timeline", prompt: "Create a timeline of the most important events in the French Revolution." },
+        { label: "Coding Debugger", prompt: "Explain how this JavaScript async/await code works and find potential bugs." },
+        { label: "Writing Better Essays", prompt: "Give me 3 different hooks for an essay about climate change policy." },
+        { label: "Quick Math Shortcuts", prompt: "What are some mental math tricks for calculating percentages quickly?" }
+    ];
+
+    const shuffleSuggestions = () => {
+        const shuffled = [...allSuggestions].sort(() => 0.5 - Math.random());
+        setDisplaySuggestions(shuffled.slice(0, 4));
+    };
+
     useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const chatIdFromUrl = queryParams.get('id');
+
         const savedHistory = localStorage.getItem('studybuddy_chat_history');
         if (savedHistory) {
-            setChatHistory(JSON.parse(savedHistory));
-        }
-    }, []);
+            const parsedHistory = JSON.parse(savedHistory);
+            setChatHistory(parsedHistory);
 
-    // Handle initial message from other pages (e.g. Resume Builder)
+            if (chatIdFromUrl) {
+                const targetChat = parsedHistory.find(chat => chat.id.toString() === chatIdFromUrl);
+                if (targetChat) {
+                    setCurrentChatId(targetChat.id);
+                    setMessages(targetChat.messages);
+                }
+            }
+        }
+    }, [location.search]);
+
     useEffect(() => {
         if (location.state?.initialMessage) {
             setInputMessage(location.state.initialMessage);
-            // Optional: clear state so it doesn't persist on refresh/back?
-            // navigate(location.pathname, { replace: true });
         }
     }, [location.state]);
 
-    // Save history when messages update
     useEffect(() => {
         if (messages.length > 0) {
             const previewText = messages[0].content.length > 30
@@ -45,7 +87,6 @@ const ChatPage = () => {
                 : messages[0].content;
 
             if (currentChatId) {
-                // Update existing chat
                 setChatHistory(prev => {
                     const updated = prev.map(chat =>
                         chat.id === currentChatId
@@ -56,13 +97,12 @@ const ChatPage = () => {
                     return updated;
                 });
             } else {
-                // Create new chat
                 const newId = Date.now();
                 const newChat = {
                     id: newId,
                     title: previewText || 'New Chat',
                     messages: messages,
-                    date: 'Today', // Simplified for now
+                    date: 'Today',
                     preview: previewText
                 };
                 setCurrentChatId(newId);
@@ -78,7 +118,7 @@ const ChatPage = () => {
     const loadChat = (chat) => {
         setCurrentChatId(chat.id);
         setMessages(chat.messages);
-        if (window.innerWidth < 768) setSidebarOpen(false); // Auto close on mobile
+        setIsHistoryOpen(false);
     };
 
     const deleteChat = (e, chatId) => {
@@ -86,7 +126,6 @@ const ChatPage = () => {
         const updatedHistory = chatHistory.filter(chat => chat.id !== chatId);
         setChatHistory(updatedHistory);
         localStorage.setItem('studybuddy_chat_history', JSON.stringify(updatedHistory));
-
         if (currentChatId === chatId) {
             setMessages([]);
             setCurrentChatId(null);
@@ -115,7 +154,6 @@ const ChatPage = () => {
 
     const handleShare = (e, chat) => {
         e.stopPropagation();
-        // Simulate sharing link
         const shareUrl = `${window.location.origin}/chat?id=${chat.id}`;
         navigator.clipboard.writeText(shareUrl).then(() => {
             alert('Chat link copied to clipboard!');
@@ -140,236 +178,296 @@ const ChatPage = () => {
         }
     };
 
-    const handleSendMessage = async () => {
-        if ((!inputMessage.trim() && !selectedFile) || loading) return;
+    const handleSendMessage = async (msgOverride) => {
+        const finalMsg = msgOverride || inputMessage;
+        if ((!finalMsg.trim() && !selectedFile) || loading) return;
 
-        const userMessage = inputMessage.trim();
+        const userMessage = finalMsg.trim();
         const fileToSend = selectedFile;
 
         setInputMessage('');
         setSelectedFile(null);
+        setIsHistoryOpen(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
 
         setLoading(true);
 
-        const conversationHistory = messages.map(msg => ({
-            role: msg.role,
-            content: msg.content
-        }));
-
-        // Add user message to UI
-        const displayContent = fileToSend
-            ? `[Attached: ${fileToSend.name}] ${userMessage}`
-            : userMessage;
-
-        const newUserMessage = { role: 'user', content: displayContent };
+        const newUserMessage = {
+            role: 'user',
+            content: fileToSend ? `[Attached: ${fileToSend.name}] ${userMessage}` : userMessage
+        };
         setMessages(prev => [...prev, newUserMessage]);
 
+        const conversationHistory = messages.map(msg => ({ role: msg.role, content: msg.content }));
+
         // Determine mode based on context
-        // Default to Resume Builder for general chat, Resume Review if file is attached
-        let mode = 'resume-builder';
-        if (fileToSend) mode = 'resume-review';
+        let mode = currentMode;
+        if (fileToSend) {
+            if (currentMode === 'resume-builder') {
+                mode = 'resume-review';
+            } else {
+                mode = 'pdf-qa';
+            }
+        }
 
         try {
             const response = await sendChatMessage(userMessage, conversationHistory, mode, fileToSend);
-
             if (response.success) {
-                const aiMessage = { role: 'assistant', content: response.data.response };
-                setMessages(prev => [...prev, aiMessage]);
+                setMessages(prev => [...prev, { role: 'assistant', content: response.data.response }]);
             } else {
                 throw new Error(response.message || 'Failed to get response');
             }
         } catch (error) {
-            console.error('Chat error:', error);
-            const errorMessage = { role: 'assistant', content: `Sorry, I encountered an error: ${error.message}` };
-            setMessages(prev => [...prev, errorMessage]);
+            setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message}` }]);
         } finally {
             setLoading(false);
         }
     };
 
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return "Good Morning";
+        if (hour < 18) return "Good Afternoon";
+        return "Good Evening";
+    };
+
     return (
-        <div className="flex h-screen bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans overflow-hidden transition-colors duration-300">
+        <div className="flex h-screen bg-white dark:bg-[#0d0d0d] text-gray-800 dark:text-gray-200 font-sans overflow-hidden transition-all duration-500">
 
-            {/* Sidebar - ChatGPT Style */}
-            <div className={`${sidebarOpen ? 'w-64' : 'w-0'} bg-gray-50 dark:bg-gray-800 transition-all duration-300 flex flex-col border-r border-gray-200 dark:border-gray-700 relative z-20`}>
-                <div className="p-3">
-                    <button
-                        onClick={() => navigate('/dashboard')}
-                        className="flex items-center gap-3 w-full px-3 py-3 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition text-sm text-gray-700 dark:text-gray-300 bg-transparent border border-transparent font-medium"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to Dashboard
-                    </button>
-                </div>
+            <div className="flex-1 flex flex-col relative w-full overflow-hidden">
+                {/* Header */}
+                <div className="h-20 flex items-center justify-between px-6 z-20 border-b border-gray-100 dark:border-white/5">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={() => navigate('/dashboard')}
+                            className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-all duration-300 group"
+                            title="Back to Dashboard"
+                        >
+                            <ArrowLeft className="w-5 h-5 text-gray-400 group-hover:text-gray-800 dark:text-gray-500 dark:group-hover:text-white group-hover:-translate-x-1 transition-transform" />
+                        </button>
 
-                <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2" onClick={() => setActiveMenuChatId(null)}>
-                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 px-2">Chats</div>
-                    {chatHistory.length === 0 ? (
-                        <div className="text-sm text-gray-400 px-2 italic">No previous chats</div>
-                    ) : (
-                        chatHistory.map((chat) => (
-                            <div
-                                key={chat.id}
-                                onClick={() => loadChat(chat)}
-                                className={`group relative flex items-center justify-between px-3 py-3 rounded-md cursor-pointer text-sm transition ${currentChatId === chat.id ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-700 dark:text-gray-300'}`}
-                            >
-                                <div className="flex items-center gap-2 overflow-hidden w-full">
-                                    <MessageSquare className="w-4 h-4 text-gray-500 shrink-0" />
-                                    {editingChatId === chat.id ? (
-                                        <div className="flex items-center gap-1 w-full" onClick={(e) => e.stopPropagation()}>
-                                            <input
-                                                type="text"
-                                                value={newChatTitle}
-                                                onChange={(e) => setNewChatTitle(e.target.value)}
-                                                className="w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 text-xs focus:outline-none focus:border-teal-500 dark:text-white"
-                                                autoFocus
-                                            />
-                                            <button onClick={saveRename} className="p-1 hover:bg-gray-200 rounded text-green-600">
-                                                <Check className="w-3 h-3" />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <span className="truncate">{chat.title}</span>
-                                    )}
+                        <div className="flex items-center gap-4 pl-2">
+                            <div className="w-10 h-10 bg-black dark:bg-white rounded-xl shadow-xl flex items-center justify-center transition-transform hover:scale-110 duration-500 overflow-hidden">
+                                <Bot className="w-6 h-6 text-white dark:text-black" />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="font-black text-lg tracking-tight text-gray-900 dark:text-white leading-none">StudyBuddy AI</span>
+                                <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em] mt-1">Smart Learning</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 relative">
+                        <button
+                            onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+                            className={`p-2 rounded-full transition-all duration-300 ${isHistoryOpen ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500'}`}
+                            title="Chat History"
+                        >
+                            <History className="w-5 h-5" />
+                        </button>
+
+                        {/* History Popup Card - Glassmorphism style (Notification Card Match) */}
+                        {isHistoryOpen && (
+                            <div className="absolute right-0 top-12 w-80 max-h-[70vh] bg-white/80 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 z-50 flex flex-col animate-in fade-in slide-in-from-top-4 duration-300 overflow-hidden">
+                                <div className="p-4 border-b border-white/10 dark:border-white/5 flex items-center justify-between bg-white/30 dark:bg-white/5">
+                                    <div className="flex items-center gap-2">
+                                        <History className="w-4 h-4 text-blue-600" />
+                                        <span className="font-bold text-sm">Recent Chats</span>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setMessages([]);
+                                            setCurrentChatId(null);
+                                            setIsHistoryOpen(false);
+                                        }}
+                                        className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-600 rounded-lg transition-colors"
+                                        title="New Chat"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
                                 </div>
 
-                                {!editingChatId && (
-                                    <div className="relative">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setActiveMenuChatId(activeMenuChatId === chat.id ? null : chat.id);
-                                            }}
-                                            className={`p-1 rounded-md text-gray-500 hover:bg-gray-300 ${activeMenuChatId === chat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                        >
-                                            <MoreVertical className="w-4 h-4" />
-                                        </button>
+                                <div className="flex-1 overflow-y-auto p-2 space-y-1.5 custom-scrollbar min-h-[200px]">
+                                    {chatHistory.length === 0 ? (
+                                        <div className="py-12 text-center">
+                                            <MessageSquare className="w-8 h-8 text-gray-200 dark:text-gray-800 mx-auto mb-2" />
+                                            <p className="text-xs text-gray-400">Your chat history will appear here</p>
+                                        </div>
+                                    ) : (
+                                        chatHistory.map(chat => (
+                                            <div
+                                                key={chat.id}
+                                                onClick={() => loadChat(chat)}
+                                                className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl cursor-pointer transition-all duration-200 ${currentChatId === chat.id ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30' : 'hover:bg-gray-50 dark:hover:bg-white/5 border border-transparent'}`}
+                                            >
+                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${currentChatId === chat.id ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-400'}`}>
+                                                    <MessageSquare className="w-4 h-4" />
+                                                </div>
 
-                                        {activeMenuChatId === chat.id && (
-                                            <div className="absolute right-0 top-6 w-32 bg-white dark:bg-gray-800 shadow-xl rounded-md border border-gray-100 dark:border-gray-700 z-50 overflow-hidden py-1">
-                                                <button
-                                                    onClick={(e) => startRenaming(e, chat)}
-                                                    className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
-                                                >
-                                                    <Edit className="w-3 h-3" /> Rename
-                                                </button>
-                                                <button
-                                                    onClick={(e) => handleShare(e, chat)}
-                                                    className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                                                >
-                                                    <Share2 className="w-3 h-3" /> Share
-                                                </button>
-                                                <button
-                                                    onClick={(e) => deleteChat(e, chat.id)}
-                                                    className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                                                >
-                                                    <Trash2 className="w-3 h-3" /> Delete
-                                                </button>
+                                                <div className="flex-1 min-w-0 text-left">
+                                                    {editingChatId === chat.id ? (
+                                                        <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                                            <input
+                                                                autoFocus
+                                                                value={newChatTitle}
+                                                                onChange={e => setNewChatTitle(e.target.value)}
+                                                                onKeyDown={e => e.key === 'Enter' && saveRename(e)}
+                                                                className="w-full bg-white dark:bg-gray-900 border border-blue-500 rounded px-1.5 py-0.5 text-xs focus:ring-0"
+                                                            />
+                                                            <button onClick={saveRename} className="text-green-500 p-0.5 hover:bg-green-100 dark:hover:bg-green-900/30 rounded">
+                                                                <Check className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <p className={`text-xs font-semibold truncate ${currentChatId === chat.id ? 'text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-200'}`}>{chat.title}</p>
+                                                            <p className="text-[10px] text-gray-400 truncate mt-0.5">{chat.preview || 'No messages yet'}</p>
+                                                        </>
+                                                    )}
+                                                </div>
+
+                                                <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (activeMenuChatId === chat.id) setActiveMenuChatId(null);
+                                                            else setActiveMenuChatId(chat.id);
+                                                        }}
+                                                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-gray-400"
+                                                    >
+                                                        <MoreVertical className="w-3 h-3" />
+                                                    </button>
+
+                                                    {activeMenuChatId === chat.id && (
+                                                        <div className="absolute right-8 top-0 z-60 bg-white dark:bg-gray-800 border border-gray-100 dark:border-white/10 rounded-xl shadow-xl py-1 min-w-[100px] animate-in fade-in zoom-in duration-200" onClick={e => e.stopPropagation()}>
+                                                            <button onClick={(e) => startRenaming(e, chat)} className="w-full flex items-center gap-2 px-3 py-1.5 text-[10px] hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                                                <Edit className="w-3 h-3 text-blue-500" /> Rename
+                                                            </button>
+                                                            <button onClick={(e) => handleShare(e, chat)} className="w-full flex items-center gap-2 px-3 py-1.5 text-[10px] hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300">
+                                                                <Share2 className="w-3 h-3 text-emerald-500" /> Share
+                                                            </button>
+                                                            <div className="h-px bg-gray-100 dark:bg-gray-700 my-1" />
+                                                            <button onClick={(e) => deleteChat(e, chat.id)} className="w-full flex items-center gap-2 px-3 py-1.5 text-[10px] hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500">
+                                                                <Trash2 className="w-3 h-3" /> Delete
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
-                                )}
+                                        ))
+                                    )}
+                                </div>
+                                <div className="p-3 bg-gray-50/50 dark:bg-white/5 border-t border-white/10 dark:border-white/5 text-center">
+                                    <button
+                                        onClick={() => setIsHistoryOpen(false)}
+                                        className="text-[10px] font-bold text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition"
+                                    >
+                                        Close History
+                                    </button>
+                                </div>
                             </div>
-                        ))
-                    )}
-                </div>
+                        )}
 
-
-                <div className="p-3 border-t border-gray-200">
-                    <button
-                        onClick={() => { setMessages([]); setInputMessage(''); setCurrentChatId(null); }}
-                        className="flex items-center gap-3 w-full px-3 py-3 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 shadow-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        New Chat
-                    </button>
-                </div>
-            </div>
-
-            {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col relative w-full bg-white dark:bg-gray-900 transition-colors duration-300">
-                {/* Header for Chat Page */}
-                <div className="h-16 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between px-4 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-10">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-linear-to-br from-teal-500 to-green-500 rounded-lg flex items-center justify-center">
-                                <Bot className="w-5 h-5 text-white" />
-                            </div>
-                            <span className="font-bold text-lg text-gray-800 dark:text-white">StudyBuddyAI</span>
+                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center font-bold text-xs text-gray-600 dark:text-gray-400 border border-gray-100 dark:border-gray-700">
+                            {user?.name?.[0].toUpperCase() || 'M'}
                         </div>
                     </div>
                 </div>
 
-
-
-
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto relative scroll-smooth">
+                {/* Content */}
+                <div className="flex-1 flex flex-col items-center justify-start overflow-y-auto px-4 pb-40 pt-10 scroll-smooth">
                     {messages.length === 0 ? (
-                        <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-0 animate-in fade-in zoom-in duration-500 fill-mode-forwards" style={{ opacity: 1 }}>
-                            <div className="w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 flex items-center justify-center mb-6">
-                                <Bot className="w-8 h-8 text-teal-600" />
+                        <div className="w-full max-w-2xl flex flex-col items-center text-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                            <div className="relative mb-8">
+                                <div className="w-20 h-20 bg-linear-to-tr from-green-400 to-blue-500 rounded-full blur-[2px] shadow-[0_0_40px_rgba(72,187,120,0.4)] dark:shadow-[0_0_60px_rgba(72,187,120,0.6)] animate-pulse" />
+                                <div className="absolute inset-0 w-20 h-20 bg-linear-to-tr from-green-300 to-emerald-400 rounded-full opacity-60 mix-blend-screen" />
                             </div>
-                            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">How can I help you today?</h2>
+
+                            <h1 className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-linear-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 mb-2 leading-tight">
+                                {getGreeting()}, {user?.name?.split(' ')[0] || 'Friend'}
+                            </h1>
+                            <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-gray-200 mb-8 opacity-90">
+                                Can I help you with anything today?
+                            </h2>
+
+                            <p className="text-gray-500 dark:text-gray-400 text-sm max-w-sm mb-12">
+                                Choose a prompt below or write your own to start chatting with StudyBuddy.
+                            </p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-3xl">
+                                {displaySuggestions.map((item, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleSendMessage(item.prompt)}
+                                        className="bg-white/40 dark:bg-white/5 backdrop-blur-md border border-gray-200 dark:border-white/5 hover:border-blue-500/50 dark:hover:border-blue-500/50 p-4 rounded-2xl text-left transition-all duration-300 hover:scale-[1.02] group"
+                                    >
+                                        <p className="font-semibold text-gray-800 dark:text-gray-200 text-sm mb-1 group-hover:text-blue-500 transition-colors">{item.label}</p>
+                                        <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400">
+                                            <span>Click to try</span>
+                                            <Sparkles className="w-3 h-3 group-hover:animate-spin-slow" />
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+
+
+                            <button
+                                onClick={shuffleSuggestions}
+                                className="mt-12 flex items-center gap-2 text-xs text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors group"
+                            >
+                                <RefreshCcw className="w-3 h-3 group-hover:rotate-180 transition-transform duration-500" /> Refresh prompts
+                            </button>
                         </div>
                     ) : (
-                        <div className="flex flex-col items-center w-full py-10">
+                        <div className="w-full max-w-3xl space-y-8 animate-in fade-in duration-500">
                             {messages.map((msg, index) => (
-                                <div key={index} className={`w-full max-w-3xl px-4 py-6 text-base flex gap-4 ${msg.role === 'assistant' ? 'bg-transparent' : 'bg-transparent'}`}>
-                                    <div className={`w-8 h-8 rounded-sm flex items-center justify-center shrink-0 ${msg.role === 'assistant' ? 'bg-teal-600' : 'bg-purple-600'}`}>
-                                        {msg.role === 'assistant' ? <Bot className="w-5 h-5 text-white" /> : <span className="text-white font-bold text-xs">U</span>}
-                                    </div>
-                                    <div className="flex-1 space-y-2">
-                                        <div className="font-semibold text-sm text-gray-800 dark:text-gray-200 mb-1">{msg.role === 'assistant' ? 'StudyBuddy' : 'You'}</div>
-                                        <div className="leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{msg.content}</div>
+                                <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                    <div className={`flex gap-4 max-w-[90%] md:max-w-[80%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                                        <div className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center font-bold text-xs shadow-sm ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-800 dark:text-white'}`}>
+                                            {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                                        </div>
+                                        <div className={`space-y-1.5 ${msg.role === 'user' ? 'text-right' : ''}`}>
+                                            <div className="text-[11px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">
+                                                {msg.role === 'user' ? 'You' : 'StudyBuddy'}
+                                            </div>
+                                            <div className={`px-5 py-3.5 rounded-3xl leading-relaxed text-sm md:text-base ${msg.role === 'user' ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-100/80 dark:bg-white/5 text-gray-800 dark:text-gray-200 border border-transparent dark:border-white/5'}`}>
+                                                <div className="whitespace-pre-wrap">{msg.content}</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                             {loading && (
-                                <div className="w-full max-w-3xl px-4 py-6 flex gap-4">
-                                    <div className="w-8 h-8 rounded-sm bg-teal-600 flex items-center justify-center shrink-0">
-                                        <Bot className="w-5 h-5 text-white" />
-                                    </div>
-                                    <div className="flex items-center">
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce mx-1"></span>
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce mx-1 delay-75"></span>
-                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce mx-1 delay-150"></span>
+                                <div className="flex justify-start">
+                                    <div className="flex gap-4 max-w-[80%]">
+                                        <div className="w-8 h-8 rounded-xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 flex items-center justify-center font-bold text-xs">
+                                            <Bot className="w-4 h-4" />
+                                        </div>
+                                        <div className="px-5 py-3.5 rounded-3xl bg-gray-100/80 dark:bg-white/5 flex items-center gap-1.5">
+                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" />
+                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                        </div>
                                     </div>
                                 </div>
                             )}
-                            <div ref={messagesEndRef} className="h-4" />
+                            <div ref={messagesEndRef} />
                         </div>
                     )}
                 </div>
 
-                {/* Output Input Area */}
-                <div className="w-full shrink-0 pb-6 px-4">
-                    <div className="max-w-3xl mx-auto relative">
+                {/* Input Area */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 z-30 flex justify-center backdrop-blur-md bg-white/20 dark:bg-[#0d0d0d]/40">
+                    <div className="w-full max-w-3xl animate-in slide-in-from-bottom-4 duration-700">
                         {selectedFile && (
-                            <div className="absolute -top-12 left-0 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg flex items-center gap-2 shadow-md border border-gray-200 dark:border-gray-700">
-                                <Paperclip className="w-4 h-4 text-teal-600" />
-                                <span className="text-sm truncate max-w-[200px] font-medium">{selectedFile.name}</span>
-                                <button onClick={() => setSelectedFile(null)} className="hover:text-red-500"><X className="w-4 h-4" /></button>
+                            <div className="mb-3 inline-flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm ml-4">
+                                <Paperclip className="w-3.5 h-3.5 text-blue-500" />
+                                <span className="text-xs font-medium truncate max-w-[150px]">{selectedFile.name}</span>
+                                <button onClick={() => setSelectedFile(null)} className="hover:text-red-500 transition"><X className="w-3.5 h-3.5" /></button>
                             </div>
                         )}
 
-                        <div className="flex items-end gap-2 bg-white dark:bg-gray-800 rounded-xl p-3 shadow-lg border border-gray-200 dark:border-gray-700 focus-within:border-teal-500">
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="p-2 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 transition"
-                                title="Upload PDF"
-                            >
-                                <Paperclip className="w-5 h-5" />
-                            </button>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleFileSelect}
-                                accept=".pdf"
-                                className="hidden"
-                            />
-
+                        <div className="bg-white/80 dark:bg-[#1a1a1a]/90 backdrop-blur-2xl border border-gray-200 dark:border-white/10 rounded-4xl p-4 shadow-xl focus-within:border-blue-500/50 group">
                             <textarea
                                 value={inputMessage}
                                 onChange={(e) => setInputMessage(e.target.value)}
@@ -379,10 +477,8 @@ const ChatPage = () => {
                                         handleSendMessage();
                                     }
                                 }}
-                                style={{ height: '24px', maxHeight: '200px' }}
-                                placeholder="Message StudyBuddy..."
-                                className="flex-1 bg-transparent text-gray-800 dark:text-gray-200 focus:outline-none resize-none overflow-hidden py-0 my-1 max-h-[200px] placeholder-gray-400 dark:placeholder-gray-500"
-                                disabled={loading}
+                                placeholder="How can StudyBuddy help you today?"
+                                className="w-full bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-gray-800 dark:text-gray-200 px-3 min-h-[40px] max-h-[200px] resize-none text-base placeholder-gray-400 dark:placeholder-gray-500"
                                 rows={1}
                                 onInput={(e) => {
                                     e.target.style.height = 'auto';
@@ -390,22 +486,61 @@ const ChatPage = () => {
                                 }}
                             />
 
-                            <button
-                                onClick={handleSendMessage}
-                                disabled={loading || (!inputMessage.trim() && !selectedFile)}
-                                className={`p-2 rounded-md transition ${loading || (!inputMessage.trim() && !selectedFile) ? 'bg-transparent text-gray-300 cursor-not-allowed' : 'bg-teal-600 text-white hover:bg-teal-700'}`}
-                            >
-                                <Send className="w-4 h-4" />
-                            </button>
-                        </div>
-                        <div className="text-center text-xs text-gray-400 mt-2">
-                            StudyBuddy can make mistakes. Consider checking important information.
+                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-white/5">
+                                <div className="flex items-center gap-1">
+                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 ${modes.find(m => m.id === currentMode)?.bg || 'bg-gray-100 dark:bg-gray-800'} rounded-full text-[11px] font-bold ${modes.find(m => m.id === currentMode)?.color || 'text-gray-500'} border border-transparent hover:border-gray-200 dark:hover:border-gray-700 cursor-pointer transition relative group/mode`}>
+                                        {React.createElement(modes.find(m => m.id === currentMode)?.icon || Sparkles, { className: "w-3 h-3" })}
+                                        <span>{modes.find(m => m.id === currentMode)?.label || 'StudyBuddy AI'}</span>
+                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+
+                                        {/* Quick Mode Switcher Tooltip */}
+                                        <div className="absolute bottom-full left-0 mb-2 hidden group-hover/mode:flex flex-col bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl py-1 min-w-[150px] overflow-hidden">
+                                            {modes.map(m => (
+                                                <button
+                                                    key={m.id}
+                                                    onClick={() => setCurrentMode(m.id)}
+                                                    className={`flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition ${currentMode === m.id ? m.color : 'text-gray-500'}`}
+                                                >
+                                                    <m.icon className="w-3.5 h-3.5" />
+                                                    <span className="text-[10px]">{m.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="p-2 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition ml-2"
+                                    >
+                                        <Paperclip className="w-4 h-4" />
+                                    </button>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept=".pdf" className="hidden" />
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => handleSendMessage()}
+                                        disabled={loading || (!inputMessage.trim() && !selectedFile)}
+                                        className={`p-2 rounded-xl transition-all duration-300 ${loading || (!inputMessage.trim() && !selectedFile) ? 'bg-gray-100 dark:bg-gray-800 text-gray-400' : 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 hover:scale-105'}`}
+                                    >
+                                        <Send className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-            </div >
-        </div >
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                @keyframes spin-slow {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                .animate-spin-slow {
+                    animation: spin-slow 8s linear infinite;
+                }
+            `}} />
+        </div>
     );
 };
 

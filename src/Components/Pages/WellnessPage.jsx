@@ -117,7 +117,7 @@ const WellnessPage = () => {
                 </div>
 
                 {/* Daily Quote (Static for now) */}
-                <div className="bg-gradient-to-r from-pink-500 to-purple-600 rounded-2xl p-8 text-white text-center shadow-lg">
+                <div className="bg-linear-to-r from-pink-500 to-purple-600 rounded-2xl p-8 text-white text-center shadow-lg">
                     <h3 className="text-xl opacity-90 mb-2 font-medium">Daily Wisdom</h3>
                     <p className="text-2xl md:text-3xl font-bold serif italic">"Believe you can and you're halfway there."</p>
                     <p className="mt-4 opacity-75">— Theodore Roosevelt</p>

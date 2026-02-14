@@ -108,7 +108,7 @@ const AchievementsPage = () => {
                 {view === 'list' && (
                     <>
                         {/* XP Summary Card */}
-                        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-8 text-white mb-10 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="bg-linear-to-r from-purple-600 to-indigo-600 rounded-3xl p-8 text-white mb-10 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
                             <div>
                                 <h2 className="text-3xl font-bold mb-2">Total XP Earned</h2>
                                 <p className="opacity-90">Keep taking tests to level up!</p>

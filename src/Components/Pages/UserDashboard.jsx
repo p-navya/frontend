@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { GraduationCap, BookOpen, Users, Award, Heart, FileText, Send, Paperclip, Bot, X, ChevronRight, Play, Edit, Clock, Check } from 'lucide-react'
+import { GraduationCap, BookOpen, Users, Award, Heart, FileText, Send, Paperclip, Bot, X, ChevronRight, ArrowRight, Play, Edit, Clock, Check } from 'lucide-react'
 import { sendChatMessage } from '../../services/chatbotService'
 import EditProfileModal from './EditProfileModal' // Import the modal
 
@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom'
 function UserDashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  console.log("UserDashboard Loaded - Study Assistant Widget Ready");
   // Initialize stats and profile from localStorage
   const calculateStats = () => {
     const myGroups = JSON.parse(localStorage.getItem('studybuddy_my_groups') || '[]');
@@ -299,15 +300,18 @@ function UserDashboard() {
                 {/* Chat / Study Helper Widget */}
                 <div
                   onClick={() => navigate('/chat')}
-                  className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-indigo-200/50 dark:border-indigo-500/30 hover:shadow-2xl hover:shadow-indigo-200/40 hover:scale-[1.02] transition-all duration-300 cursor-pointer relative overflow-hidden group h-64 flex flex-col justify-between"
+                  className="bg-white/80 dark:bg-gray-800/90 backdrop-blur-xl rounded-[2rem] p-6 shadow-xl border border-gray-100 dark:border-white/5 hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 cursor-pointer relative overflow-hidden group h-72 flex flex-col justify-between"
                 >
+                  <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <div className="w-20 h-20 bg-gradient-to-tr from-green-400 to-blue-500 rounded-full blur-xl" />
+                  </div>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-300">
-                      <Bot className="w-5 h-5" />
+                    <div className="w-10 h-10 bg-gray-100 dark:bg-white/5 rounded-xl flex items-center justify-center text-gray-800 dark:text-gray-200">
+                      <Bot className="w-5 h-5 text-green-500" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-800 dark:text-white">Study Helper</h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-300">Ask a question...</p>
+                      <h3 className="font-bold text-gray-800 dark:text-white">Study Assistant</h3>
+                      <p className="text-xs text-gray-400">Ask anything...</p>
                     </div>
                   </div>
                   <div className="space-y-3">
@@ -318,8 +322,8 @@ function UserDashboard() {
                       Sure! It essentially states that...
                     </div>
                   </div>
-                  <div className="mt-4 flex items-center gap-2 text-indigo-600 text-xs font-bold group-hover:gap-3 transition-all">
-                    Continue Chatting <ChevronRight className="w-3 h-3" />
+                  <div className="mt-4 flex items-center gap-2 text-green-600 text-xs font-bold group-hover:gap-3 transition-all">
+                    Start new session <ArrowRight className="w-3 h-3" />
                   </div>
                 </div>
 
