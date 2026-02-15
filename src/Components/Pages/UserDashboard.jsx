@@ -3,6 +3,8 @@ import { useAuth } from '../../context/AuthContext'
 import { GraduationCap, BookOpen, Users, Award, Heart, FileText, Send, Paperclip, Bot, X, ChevronRight, ArrowRight, Play, Edit, Clock, Check } from 'lucide-react'
 import { sendChatMessage } from '../../services/chatbotService'
 import EditProfileModal from './EditProfileModal' // Import the modal
+import { apiRequest } from '../../config/api';
+import { Plus, Trash2 } from 'lucide-react'; // Ensure icons are imported
 
 const ViewProfileModal = ({ imageUrl, onClose }) => {
   if (!imageUrl) return null;
@@ -63,6 +65,192 @@ function UserDashboard() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [showEditProfile, setShowEditProfile] = useState(false) // State for modal
   const [viewProfileImage, setViewProfileImage] = useState(null) // State for viewing image
+
+  // --- FUNCTIONAL DASHBOARD LOGIC START ---
+  const [tasks, setTasks] = useState([]);
+  const [newTask, setNewTask] = useState('');
+  const [activityData, setActivityData] = useState([]);
+
+  // 1. Fetch Real Data & Initialize Dashboard
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch Real Groups Count
+        const groupsResponse = await apiRequest('/groups/my');
+        if (groupsResponse.success) {
+          setStats(prev => ({ ...prev, groups: groupsResponse.data.length }));
+        }
+
+        // Fetch Quiz Attempts (Achievements)
+        const attemptsResponse = await apiRequest('/quizzes/attempts');
+        if (attemptsResponse.success) {
+          const attempts = attemptsResponse.data || [];
+          const totalXP = attempts.reduce((sum, item) => sum + (item.xp || 0), 0);
+          setStats(prev => ({
+            ...prev,
+            achievements: attempts.length,
+            score: totalXP
+          }));
+          // Update localStorage for consistency
+          localStorage.setItem('studybuddy_achievements', JSON.stringify(attempts));
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error);
+      }
+
+      // Initialize Activity Variables
+      const storedActivity = JSON.parse(localStorage.getItem('studybuddy_dashboard_activity') || '[]');
+      let finalActivity = storedActivity;
+
+      // 2. Fetch Activity Stats (Real Data)
+      try {
+        const activityResponse = await apiRequest('/activity/stats');
+
+        if (activityResponse.success && activityResponse.data.length > 0) {
+          finalActivity = activityResponse.data;
+          // Cache for offline support
+          localStorage.setItem('studybuddy_dashboard_activity', JSON.stringify(finalActivity));
+        } else {
+          // Fallback to mock generation if no data exists yet (new user)
+          if (storedActivity.length === 0 || new Date(storedActivity[6]?.date).getDate() !== new Date().getDate()) {
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const today = new Date();
+            const newActivity = [];
+            for (let i = 6; i >= 0; i--) {
+              const d = new Date(today);
+              d.setDate(d.getDate() - i);
+              const dayName = days[d.getDay()];
+              newActivity.push({
+                day: dayName[0],
+                fullDay: dayName,
+                date: d.toISOString(),
+                hours: 0
+              });
+            }
+            finalActivity = newActivity;
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch activity stats:", error);
+      }
+
+      setActivityData(finalActivity);
+
+      // 3. Log Dashboard Visit
+      try {
+        apiRequest('/activity', {
+          method: 'POST',
+          body: JSON.stringify({
+            type: 'dashboard_view',
+            description: 'User viewed dashboard',
+            duration: 5
+          })
+        });
+      } catch {
+        // Ignore logging errors
+      }
+
+      // 4. Load Tasks (Real Data)
+      try {
+        const tasksResponse = await apiRequest('/tasks');
+        if (tasksResponse.success) {
+          setTasks(tasksResponse.data);
+          // Cache for offline
+          localStorage.setItem('studybuddy_tasks', JSON.stringify(tasksResponse.data));
+        } else {
+          // Fallback to local keys if API fails
+          const savedTasks = JSON.parse(localStorage.getItem('studybuddy_tasks') || '[]');
+          if (savedTasks.length === 0) {
+            // Defaults only if truly empty
+            const defaults = [
+              { id: 'mock-1', text: "Complete Profile Setup", completed: false, isMock: true },
+              { id: 'mock-2', text: "Join a Study Group", completed: false, isMock: true }
+            ];
+            setTasks(defaults);
+          } else {
+            setTasks(savedTasks);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch tasks:", error);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Task Management Functions (Connected to Backend)
+  const addTask = async (e) => {
+    e.preventDefault();
+    if (!newTask.trim()) return;
+
+    // Optimistic UI Update
+    const tempId = Date.now();
+    const t = { id: tempId, text: newTask, completed: false, isPending: true };
+    setTasks(prev => [...prev, t]);
+    setNewTask('');
+
+    try {
+      const res = await apiRequest('/tasks', {
+        method: 'POST',
+        body: JSON.stringify({ text: t.text })
+      });
+
+      if (res.success) {
+        // Replace temp task with real one
+        setTasks(prev => prev.map(task => task.id === tempId ? res.data : task));
+      } else {
+        // Revert on error
+        setTasks(prev => prev.filter(task => task.id !== tempId));
+      }
+    } catch (err) {
+      console.error("Add task failed", err);
+      setTasks(prev => prev.filter(task => task.id !== tempId));
+    }
+  };
+
+  const toggleTask = async (id) => {
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    // Optimistic
+    const updated = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+    setTasks(updated);
+
+    if (task.isMock) return; // Don't sync mock tasks
+
+    try {
+      await apiRequest(`/tasks/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ completed: !task.completed })
+      });
+    } catch (err) {
+      console.error("Toggle task failed", err);
+      // Revert
+      setTasks(tasks);
+    }
+  };
+
+  const deleteTask = async (id) => {
+    // Optimistic
+    const prevTasks = [...tasks];
+    setTasks(prev => prev.filter(t => t.id !== id));
+
+    const task = prevTasks.find(t => t.id === id);
+    if (task?.isMock) return;
+
+    try {
+      await apiRequest(`/tasks/${id}`, {
+        method: 'DELETE'
+      });
+    } catch (err) {
+      console.error("Delete task failed", err);
+      setTasks(prevTasks);
+    }
+  };
+  // --- FUNCTIONAL DASHBOARD LOGIC END ---
+
+
 
 
   // Listen for storage changes to update profile and stats
@@ -397,61 +585,76 @@ function UserDashboard() {
                   </div>
                 </div>
 
+
                 {/* Activity Hours Chart */}
                 <div className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-orange-200/50 dark:border-orange-500/30 hover:shadow-2xl hover:shadow-orange-200/40 transition-all duration-300 flex-1 min-h-[200px]">
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-bold text-gray-800 dark:text-white text-lg">Activity Hours</h3>
-                    <select className="bg-gray-50 dark:bg-gray-700 border-none text-xs text-gray-500 dark:text-gray-300 rounded-lg px-2 py-1 outline-none font-medium">
-                      <option>Weekly</option>
-                      <option>Monthly</option>
-                    </select>
+                    <h3 className="font-bold text-gray-800 dark:text-white text-lg">Activity</h3>
+                    <span className="text-xs text-orange-500 font-bold bg-orange-50 dark:bg-orange-900/30 px-2 py-1 rounded-lg">Last 7 Days</span>
                   </div>
                   <div className="flex items-end justify-between h-40 gap-2 md:gap-4 px-2">
-                    {/* Mock Bars */}
-                    {[35, 55, 40, 70, 50, 65, 45].map((h, i) => (
-                      <div key={i} className="flex flex-col items-center gap-2 w-full">
+                    {activityData.map((data, i) => (
+                      <div key={i} className="flex flex-col items-center gap-2 w-full group cursor-pointer" title={`${data.hours}% Activity on ${data.fullDay}`}>
                         <div
-                          className="w-full max-w-[24px] bg-orange-100 rounded-full relative group transition-all hover:bg-orange-200"
+                          className="w-full max-w-[24px] bg-orange-100 dark:bg-orange-900/20 rounded-full relative transition-all hover:bg-orange-200 dark:hover:bg-orange-900/40"
                           style={{ height: '100%' }}
                         >
                           <div
-                            className="absolute bottom-0 w-full bg-orange-400 rounded-full transition-all group-hover:bg-orange-500"
-                            style={{ height: `${h}%` }}
+                            className="absolute bottom-0 w-full bg-orange-400 dark:bg-orange-500 rounded-full transition-all duration-1000 group-hover:bg-orange-500 dark:group-hover:bg-orange-400"
+                            style={{ height: `${data.hours}%` }}
                           ></div>
                         </div>
-                        <span className="text-[10px] uppercase font-bold text-gray-400">{['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}</span>
+                        <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500">{data.day}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Today's Classes / Schedule */}
+                {/* Task Manager Widget (Replaces Static Schedule) */}
                 <div className="bg-white/70 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-xl border border-blue-200/50 dark:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-200/40 transition-all duration-300">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-gray-800 dark:text-white">Today's Schedule</h3>
-                    <button className="p-1 hover:bg-gray-100 rounded-full"><ChevronRight className="w-4 h-4 text-gray-400" /></button>
+                    <h3 className="font-bold text-gray-800 dark:text-white">My Tasks</h3>
+                    <span className="text-xs text-gray-400">{tasks.filter(t => !t.completed).length} pending</span>
                   </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-4 p-3 hover:bg-white dark:hover:bg-gray-700 hover:shadow-md rounded-2xl transition-all duration-300 group cursor-pointer border border-transparent hover:border-blue-100">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 flex items-center justify-center font-bold">10</div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-gray-800 dark:text-gray-200 text-sm">Physics Mechanics</h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">10:00 AM - 11:30 AM</p>
-                      </div>
-                      <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 flex items-center justify-center shadow-sm group-hover:bg-blue-500 group-hover:text-white transition group-hover:border-transparent">
-                        <Play className="w-3 h-3 ml-0.5 fill-current" />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-2xl transition group cursor-pointer">
-                      <div className="w-12 h-12 rounded-2xl bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-300 flex items-center justify-center font-bold">12</div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-gray-800 dark:text-gray-200 text-sm">Design Principles</h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">12:00 PM - 01:30 PM</p>
-                      </div>
-                      <div className="w-8 h-8 rounded-full bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 flex items-center justify-center shadow-sm group-hover:bg-pink-500 group-hover:text-white transition group-hover:border-transparent">
-                        <Play className="w-3 h-3 ml-0.5 fill-current" />
-                      </div>
-                    </div>
+
+                  {/* Add Task Input */}
+                  <form onSubmit={addTask} className="flex gap-2 mb-4">
+                    <input
+                      type="text"
+                      value={newTask}
+                      onChange={(e) => setNewTask(e.target.value)}
+                      placeholder="Add a new task..."
+                      className="flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                    />
+                    <button type="submit" className="p-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition">
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </form>
+
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                    {tasks.length === 0 ? (
+                      <p className="text-center text-xs text-gray-400 py-4">No tasks yet. Add one above!</p>
+                    ) : (
+                      tasks.map(task => (
+                        <div key={task.id} className="flex items-center gap-3 p-2 hover:bg-white dark:hover:bg-gray-700/50 rounded-xl transition group">
+                          <button
+                            onClick={() => toggleTask(task.id)}
+                            className={`w-5 h-5 rounded-full border flex items-center justify-center transition ${task.completed ? 'bg-green-500 border-green-500 text-white' : 'border-gray-300 dark:border-gray-600 hover:border-blue-500'}`}
+                          >
+                            {task.completed && <Check className="w-3 h-3" />}
+                          </button>
+                          <span className={`flex-1 text-sm ${task.completed ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-200'}`}>
+                            {task.text}
+                          </span>
+                          <button
+                            onClick={() => deleteTask(task.id)}
+                            className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-500 transition p-1"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
 

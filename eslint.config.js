@@ -24,6 +24,8 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Disable overly strict rule that flags standard data fetching in useEffect
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
 ])

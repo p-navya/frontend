@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Folder, Upload, Search, MoreVertical, Plus, ArrowLeft, Trash2, Edit, X, Download, FileText, File, ExternalLink, Paperclip } from 'lucide-react';
+import { BookOpen, Folder, Upload, Search, MoreVertical, Plus, ArrowLeft, Trash2, Edit, X, Download, FileText, File, ExternalLink, Paperclip, Loader2, Check } from 'lucide-react';
+import { apiRequest } from '../../config/api';
+import { useAuth } from '../../context/AuthContext';
 
 const ResourcesPage = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [selectedFolder, setSelectedFolder] = useState('All Resources');
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [showCreateFolderModal, setShowCreateFolderModal] = useState(false);
@@ -12,30 +15,41 @@ const ResourcesPage = () => {
     const [activeMenuResourceId, setActiveMenuResourceId] = useState(null);
     const [renamingFolder, setRenamingFolder] = useState(null);
     const [newFolderName, setNewFolderName] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const [isUploading, setIsUploading] = useState(false);
 
-    // Mock Data
-    const [folders, setFolders] = useState(() => {
-        const saved = localStorage.getItem('studybuddy_folders');
-        return saved ? JSON.parse(saved) : ['Notes', 'Textbooks', 'Assignments', 'Past Papers'];
-    });
-
-    const [resources, setResources] = useState(() => {
-        const saved = localStorage.getItem('studybuddy_resources');
-        if (saved) return JSON.parse(saved);
-        return [
-            { id: 1, name: 'Physics Unit 1.pdf', folder: 'Notes', type: 'PDF', size: '2.4 MB', date: '2023-10-01', subject: 'Physics' },
-            { id: 2, name: 'Calculus Assignment.docx', folder: 'Assignments', type: 'DOCX', size: '1.2 MB', date: '2023-10-05', subject: 'Math' },
-            { id: 3, name: 'Modern History.pdf', folder: 'Textbooks', type: 'PDF', size: '15.8 MB', date: '2023-09-20', subject: 'History' },
-        ];
-    });
+    const [folders, setFolders] = useState(['General', 'Notes', 'Assignments', 'Past Papers']);
+    const [resources, setResources] = useState([]);
 
     useEffect(() => {
-        localStorage.setItem('studybuddy_folders', JSON.stringify(folders));
-    }, [folders]);
+        fetchResources();
+    }, []);
 
-    useEffect(() => {
-        localStorage.setItem('studybuddy_resources', JSON.stringify(resources));
-    }, [resources]);
+    const fetchResources = async () => {
+        try {
+            setIsLoading(true);
+            const response = await apiRequest('/resources');
+            if (response.success) {
+                setResources(response.data);
+                // Extract unique folders
+                const uniqueFolders = [...new Set(response.data.map(r => r.folder))];
+                setFolders(prev => [...new Set([...prev, ...uniqueFolders])]);
+            }
+        } catch (error) {
+            console.error('Failed to fetch resources:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    };
 
     const handleCreateFolder = (e) => {
         e.preventDefault();
@@ -72,26 +86,73 @@ const ResourcesPage = () => {
         setRenamingFolder(null);
     };
 
-    const handleUpload = (e) => {
+    const handleUpload = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const name = formData.get('file').name || 'New Resource.pdf';
-        const newRes = {
-            id: Date.now(),
-            name: name,
-            folder: formData.get('folder') || 'Notes',
-            subject: formData.get('subject'),
-            type: name.split('.').pop().toUpperCase(),
-            size: '0.1 MB',
-            date: new Date().toISOString().split('T')[0]
-        };
-        setResources([...resources, newRes]);
-        setShowUploadModal(false);
+        const file = formData.get('file');
+
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const base64 = await fileToBase64(file);
+            const payload = {
+                name: file.name,
+                folder: formData.get('folder') || 'General',
+                subject: formData.get('subject'),
+                type: file.name.split('.').pop().toUpperCase(),
+                size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
+                file_data: base64
+            };
+
+            const response = await apiRequest('/resources', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            if (response.success) {
+                setResources([response.data, ...resources]);
+                setShowUploadModal(false);
+            }
+        } catch (error) {
+            console.error('Upload failed:', error);
+            alert('Upload failed: ' + error.message);
+        } finally {
+            setIsUploading(false);
+        }
     };
 
-    const deleteResource = (id) => {
+    const deleteResource = async (id) => {
         if (window.confirm('Delete this resource?')) {
-            setResources(resources.filter(r => r.id !== id));
+            try {
+                const response = await apiRequest(`/resources/${id}`, {
+                    method: 'DELETE'
+                });
+                if (response.success) {
+                    setResources(resources.filter(r => r.id !== id));
+                }
+            } catch (error) {
+                console.error('Delete failed:', error);
+                alert('Delete failed: ' + error.message);
+            }
+        }
+    };
+
+    const downloadResource = (resource) => {
+        const link = document.createElement('a');
+        link.href = resource.file_data;
+        link.download = resource.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const viewResource = (resource) => {
+        const win = window.open();
+        if (win) {
+            win.document.write(`<iframe src="${resource.file_data}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+        } else {
+            alert('Please allow popups to view the resource.');
         }
     };
 
@@ -215,7 +276,24 @@ const ResourcesPage = () => {
                         </div>
                     </div>
 
-                    {filteredResources.length > 0 ? (
+                    {isLoading ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 animate-pulse">
+                                    <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4"></div>
+                                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                                    <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
+                                    <div className="pt-3 border-t border-gray-50 dark:border-gray-700 flex justify-between">
+                                        <div className="h-3 bg-gray-100 dark:bg-gray-700 rounded w-1/4"></div>
+                                        <div className="flex gap-2">
+                                            <div className="w-4 h-4 bg-gray-100 dark:bg-gray-700 rounded"></div>
+                                            <div className="w-4 h-4 bg-gray-100 dark:bg-gray-700 rounded"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : filteredResources.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {filteredResources.map(res => (
                                 <div key={res.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition flex flex-col justify-between group">
@@ -224,19 +302,32 @@ const ResourcesPage = () => {
                                             <div className="p-2 bg-gray-50 dark:bg-gray-900 rounded-lg">
                                                 {res.type === 'PDF' ? <FileText className="w-6 h-6 text-red-500" /> : <File className="w-6 h-6 text-blue-500" />}
                                             </div>
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); setActiveMenuResourceId(activeMenuResourceId === res.id ? null : res.id); }}
-                                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
-                                            >
-                                                <MoreVertical className="w-4 h-4 text-gray-400" />
-                                            </button>
-                                            {activeMenuResourceId === res.id && (
-                                                <div className="absolute top-10 right-0 w-32 bg-white dark:bg-gray-800 shadow-xl rounded-md border border-gray-100 dark:border-gray-700 z-20 py-1">
-                                                    <button onClick={() => deleteResource(res.id)} className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
-                                                        <Trash2 className="w-3 h-3" /> Delete
-                                                    </button>
-                                                </div>
-                                            )}
+                                            <div className="relative">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setActiveMenuResourceId(activeMenuResourceId === res.id ? null : res.id); }}
+                                                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
+                                                >
+                                                    <MoreVertical className="w-4 h-4 text-gray-400" />
+                                                </button>
+                                                {activeMenuResourceId === res.id && (
+                                                    <div className="absolute top-8 right-0 w-36 bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-100 dark:border-gray-700 z-20 py-1 overflow-hidden">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); viewResource(res); setActiveMenuResourceId(null); }}
+                                                            className="w-full text-left px-4 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                                                        >
+                                                            <ExternalLink className="w-3.5 h-3.5" /> View
+                                                        </button>
+                                                        {(res.uploader_id === user?.id || user?.role === 'admin') && (
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); deleteResource(res.id); }}
+                                                                className="w-full text-left px-4 py-2 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <h3 className="font-semibold text-gray-800 dark:text-white mb-1 truncate" title={res.name}>{res.name}</h3>
                                         <div className="flex items-center gap-2 mb-4">
@@ -247,10 +338,16 @@ const ResourcesPage = () => {
                                     <div className="flex items-center justify-between pt-3 border-t border-gray-50 dark:border-gray-700 mt-2">
                                         <span className="text-xs text-gray-400">{res.date}</span>
                                         <div className="flex gap-2">
-                                            <button className="p-1.5 text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition" title="Download">
+                                            <button
+                                                onClick={() => downloadResource(res)}
+                                                className="p-1.5 text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition" title="Download"
+                                            >
                                                 <Download className="w-4 h-4" />
                                             </button>
-                                            <button className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition" title="View">
+                                            <button
+                                                onClick={() => viewResource(res)}
+                                                className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition" title="View"
+                                            >
                                                 <ExternalLink className="w-4 h-4" />
                                             </button>
                                         </div>
@@ -364,16 +461,18 @@ const ResourcesPage = () => {
                                 <div className="flex gap-3 pt-2">
                                     <button
                                         type="button"
+                                        disabled={isUploading}
                                         onClick={() => setShowUploadModal(false)}
-                                        className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-700"
+                                        className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="flex-1 px-4 py-2.5 rounded-lg bg-orange-600 text-white font-bold hover:bg-orange-700 transition shadow-md shadow-orange-500/20"
+                                        disabled={isUploading}
+                                        className="flex-1 px-4 py-2.5 rounded-lg bg-orange-600 text-white font-bold hover:bg-orange-700 transition shadow-md shadow-orange-500/20 disabled:bg-orange-400 flex items-center justify-center gap-2"
                                     >
-                                        Upload
+                                        {isUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</> : 'Upload'}
                                     </button>
                                 </div>
                             </form>

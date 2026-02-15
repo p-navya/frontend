@@ -74,9 +74,22 @@ const ChatPage = () => {
         }
     }, [location.search]);
 
+    const hasSentInitialRef = useRef(false);
+
     useEffect(() => {
-        if (location.state?.initialMessage) {
-            setInputMessage(location.state.initialMessage);
+        if (location.state?.mode) {
+            setCurrentMode(location.state.mode);
+        }
+        if (location.state?.uploadedFile) {
+            setSelectedFile(location.state.uploadedFile);
+        }
+
+        // Auto-send initial message if present (e.g. from Wellness page)
+        if (location.state?.initialMessage && !hasSentInitialRef.current) {
+            hasSentInitialRef.current = true;
+            handleSendMessage(location.state.initialMessage);
+            // Clear the state so it doesn't re-send on refresh/navigation
+            navigate(location.pathname, { replace: true, state: { ...location.state, initialMessage: null } });
         }
     }, [location.state]);
 

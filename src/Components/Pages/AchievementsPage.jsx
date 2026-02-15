@@ -1,55 +1,86 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Award, Play, CheckCircle, Clock, Trophy, BarChart2, Star, X, ChevronRight, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Award, Play, CheckCircle, Clock, Trophy, BarChart2, Star, X, ChevronRight, AlertCircle, Plus } from 'lucide-react';
+import { apiRequest } from '../../config/api';
 
 const AchievementsPage = () => {
     const navigate = useNavigate();
-    const [view, setView] = useState('list'); // list, test, result
+    const [view, setView] = useState('list'); // list, test, result, create
     const [activeTest, setActiveTest] = useState(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [answers, setAnswers] = useState({});
-    const [score, setScore] = useState(0);
+    const [scoreData, setScoreData] = useState(null); // { score: 90, xp: 900 }
+
+    // Data States
+    const [tests, setTests] = useState([]);
     const [history, setHistory] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock Tests Data
-    const tests = [
-        {
-            id: 1,
-            title: 'Physics Mechanics Quiz',
-            subject: 'Physics',
-            duration: '15 mins',
-            questions: [
-                { id: 1, q: 'What represents the rate of change of velocity?', options: ['Speed', 'Acceleration', 'Force', 'Momentum'], correct: 1 },
-                { id: 2, q: 'Newton\'s First Law is also known as?', options: ['Law of Force', 'Law of Inertia', 'Law of Action-Reaction', 'Law of Gravity'], correct: 1 },
-                { id: 3, q: 'SI unit of Force is?', options: ['Joule', 'Watt', 'Newton', 'Pascal'], correct: 2 },
-            ]
-        },
-        {
-            id: 2,
-            title: 'Calculus Derivatives',
-            subject: 'Math',
-            duration: '20 mins',
-            questions: [
-                { id: 1, q: 'Derivative of x^2 is?', options: ['x', '2x', 'x^2', '2'], correct: 1 },
-                { id: 2, q: 'Derivative of sin(x) is?', options: ['cos(x)', '-sin(x)', '-cos(x)', 'tan(x)'], correct: 0 },
-            ]
-        },
-        {
-            id: 3,
-            title: 'JavaScript Basics',
-            subject: 'Computer Science',
-            duration: '10 mins',
-            questions: [
-                { id: 1, q: 'Which keyword defines a constant?', options: ['var', 'let', 'const', 'static'], correct: 2 },
-                { id: 2, q: 'Array index starts at?', options: ['1', '0', '-1', 'null'], correct: 1 },
-                { id: 3, q: 'Which is not a primitive type?', options: ['String', 'Number', 'Object', 'Boolean'], correct: 2 },
-            ]
-        }
-    ];
+    // Create Quiz State
+    const [newQuiz, setNewQuiz] = useState({
+        title: '',
+        subject: '',
+        description: '',
+        time_limit: 15,
+        questions: []
+    });
 
+    // Helper to add question fields
+    const addQuestionField = () => {
+        setNewQuiz(prev => ({
+            ...prev,
+            questions: [...prev.questions, {
+                id: Date.now(),
+                text: '',
+                options: ['', '', '', ''],
+                correctIndex: 0
+            }]
+        }));
+    };
+
+    const updateQuestion = (idx, field, value) => {
+        const updatedQuestions = [...newQuiz.questions];
+        updatedQuestions[idx][field] = value;
+        setNewQuiz(prev => ({ ...prev, questions: updatedQuestions }));
+    };
+
+    const updateOption = (qIdx, oIdx, value) => {
+        const updatedQuestions = [...newQuiz.questions];
+        updatedQuestions[qIdx].options[oIdx] = value;
+        setNewQuiz(prev => ({ ...prev, questions: updatedQuestions }));
+    };
+
+    // Initial Data Fetch
     useEffect(() => {
-        const savedHistory = localStorage.getItem('studybuddy_achievements');
-        if (savedHistory) setHistory(JSON.parse(savedHistory));
+        const fetchData = async () => {
+            try {
+                // 1. Fetch Tests
+                const quizzesRes = await apiRequest('/quizzes');
+                if (quizzesRes.success) {
+                    // Transform backend format if needed
+                    const formattedTests = quizzesRes.data.map(q => ({
+                        id: q.id,
+                        title: q.title,
+                        subject: q.subject,
+                        duration: `${q.time_limit_minutes} mins`,
+                        questions: q.questions // JSONB
+                    }));
+                    setTests(formattedTests);
+                }
+
+                // 2. Fetch History
+                const historyRes = await apiRequest('/quizzes/attempts');
+                if (historyRes.success) {
+                    setHistory(historyRes.data);
+                }
+            } catch (err) {
+                console.error("Failed to load achievement data", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, []);
 
     const startTest = (test) => {
@@ -63,32 +94,68 @@ const AchievementsPage = () => {
         setAnswers({ ...answers, [currentQuestionIndex]: optionIndex });
     };
 
-    const submitTest = () => {
-        let correctCount = 0;
-        activeTest.questions.forEach((q, idx) => {
-            if (answers[idx] === q.correct) correctCount++;
-        });
+    const submitTest = async () => {
+        try {
+            const res = await apiRequest(`/quizzes/${activeTest.id}/submit`, {
+                method: 'POST',
+                body: JSON.stringify({ answers })
+            });
 
-        const finalScore = Math.round((correctCount / activeTest.questions.length) * 100);
-        setScore(finalScore);
+            if (res.success) {
+                const { percentage } = res.data;
+                // Using percentage from backend
+                const finalPercentage = percentage;
 
-        // Save history
-        const newRecord = {
-            id: Date.now(),
-            testId: activeTest.id,
-            testName: activeTest.title,
-            score: finalScore,
-            date: new Date().toLocaleDateString(),
-            xp: finalScore * 10 // Mock XP calculation
-        };
-        const updatedHistory = [newRecord, ...history];
-        setHistory(updatedHistory);
-        localStorage.setItem('studybuddy_achievements', JSON.stringify(updatedHistory));
+                setScoreData({
+                    score: finalPercentage,
+                    xp: finalPercentage * 10
+                });
 
-        setView('result');
+                // Refresh history
+                const historyRes = await apiRequest('/quizzes/attempts');
+                if (historyRes.success) setHistory(historyRes.data);
+
+                setView('result');
+            }
+        } catch (error) {
+            console.error("Submit failed", error);
+            alert("Failed to submit test. Please try again.");
+        }
+    };
+
+    const saveNewQuiz = async () => {
+        if (!newQuiz.title || newQuiz.questions.length === 0) return alert("Please fill details and add questions");
+
+        try {
+            const res = await apiRequest('/quizzes', {
+                method: 'POST',
+                body: JSON.stringify(newQuiz)
+            });
+
+            if (res.success) {
+                alert("Quiz Created Successfully!");
+                setView('list');
+                // Refresh list
+                const quizzesRes = await apiRequest('/quizzes');
+                if (quizzesRes.success) {
+                    const formattedTests = quizzesRes.data.map(q => ({
+                        id: q.id,
+                        title: q.title,
+                        subject: q.subject,
+                        duration: `${q.time_limit_minutes} mins`,
+                        questions: q.questions
+                    }));
+                    setTests(formattedTests);
+                }
+            }
+        } catch (err) {
+            alert("Failed to create quiz: " + err.message);
+        }
     };
 
     const getTotalXP = () => history.reduce((sum, item) => sum + item.xp, 0);
+
+    if (loading) return <div className="min-h-screen flex items-center justify-center dark:bg-gray-900 dark:text-white">Loading Achievements...</div>;
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col font-sans transition-colors duration-300">
@@ -121,6 +188,15 @@ const AchievementsPage = () => {
                             </div>
                         </div>
 
+                        <div className="flex justify-end mb-6">
+                            <button
+                                onClick={() => setView('create')}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl shadow hover:bg-indigo-700 transition"
+                            >
+                                <Plus className="w-4 h-4" /> Mentor: Create Quiz
+                            </button>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {/* Available Tests */}
                             <section>
@@ -128,20 +204,21 @@ const AchievementsPage = () => {
                                     <Clock className="w-5 h-5 text-purple-600" /> Available Mock Tests
                                 </h3>
                                 <div className="space-y-4">
-                                    {tests.map(test => (
-                                        <div key={test.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition flex items-center justify-between group">
-                                            <div>
-                                                <h4 className="font-bold text-gray-800 dark:text-white">{test.title}</h4>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">{test.subject} • {test.duration} • {test.questions.length} Questions</p>
+                                    {tests.length === 0 ? <p className="text-gray-500">No quizzes available yet.</p> :
+                                        tests.map(test => (
+                                            <div key={test.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition flex items-center justify-between group">
+                                                <div>
+                                                    <h4 className="font-bold text-gray-800 dark:text-white">{test.title}</h4>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">{test.subject} • {test.duration} • {test.questions?.length || 0} Questions</p>
+                                                </div>
+                                                <button
+                                                    onClick={() => startTest(test)}
+                                                    className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 p-3 rounded-full hover:bg-purple-600 hover:text-white transition"
+                                                >
+                                                    <Play className="w-5 h-5 fill-current" />
+                                                </button>
                                             </div>
-                                            <button
-                                                onClick={() => startTest(test)}
-                                                className="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 p-3 rounded-full hover:bg-purple-600 hover:text-white transition"
-                                            >
-                                                <Play className="w-5 h-5 fill-current" />
-                                            </button>
-                                        </div>
-                                    ))}
+                                        ))}
                                 </div>
                             </section>
 
@@ -177,6 +254,89 @@ const AchievementsPage = () => {
                     </>
                 )}
 
+                {view === 'create' && (
+                    <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-xl border border-gray-100 dark:border-gray-700">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Create New Quiz</h2>
+                            <button onClick={() => setView('list')} className="text-gray-500 hover:text-gray-700 px-4">Cancel</button>
+                        </div>
+
+                        <div className="space-y-4 mb-6">
+                            <input
+                                className="w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-indigo-500 outline-none"
+                                placeholder="Quiz Title (e.g. Physics 101)"
+                                value={newQuiz.title}
+                                onChange={e => setNewQuiz({ ...newQuiz, title: e.target.value })}
+                            />
+                            <div className="flex gap-4">
+                                <input
+                                    className="flex-1 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-indigo-500 outline-none"
+                                    placeholder="Subject"
+                                    value={newQuiz.subject}
+                                    onChange={e => setNewQuiz({ ...newQuiz, subject: e.target.value })}
+                                />
+                                <input
+                                    type="number"
+                                    className="w-32 p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-indigo-500 outline-none"
+                                    placeholder="Mins"
+                                    value={newQuiz.time_limit}
+                                    onChange={e => setNewQuiz({ ...newQuiz, time_limit: parseInt(e.target.value) })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <h3 className="font-bold text-gray-700 dark:text-gray-300 border-b pb-2">Questions</h3>
+                            {newQuiz.questions.map((q, idx) => (
+                                <div key={q.id} className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                                    <div className="flex gap-2 mb-2">
+                                        <span className="font-bold text-indigo-500">Q{idx + 1}</span>
+                                        <input
+                                            className="flex-1 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-indigo-500 outline-none"
+                                            placeholder="Enter question text..."
+                                            value={q.text}
+                                            onChange={e => updateQuestion(idx, 'text', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 mt-3">
+                                        {q.options.map((opt, oIdx) => (
+                                            <div key={oIdx} className="flex items-center gap-2">
+                                                <input
+                                                    type="radio"
+                                                    name={`correct-${q.id}`}
+                                                    checked={q.correctIndex === oIdx}
+                                                    onChange={() => updateQuestion(idx, 'correctIndex', oIdx)}
+                                                />
+                                                <input
+                                                    className="flex-1 p-1 text-sm bg-white dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
+                                                    placeholder={`Option ${oIdx + 1}`}
+                                                    value={opt}
+                                                    onChange={e => updateOption(idx, oIdx, e.target.value)}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                            <button
+                                onClick={addQuestionField}
+                                className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-500 hover:border-indigo-500 hover:text-indigo-500 transition"
+                            >
+                                + Add Question
+                            </button>
+                        </div>
+
+                        <div className="mt-8">
+                            <button
+                                onClick={saveNewQuiz}
+                                className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition"
+                            >
+                                Publish Quiz
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {view === 'test' && activeTest && (
                     <div className="max-w-2xl mx-auto">
                         <div className="mb-6 flex items-center justify-between">
@@ -185,7 +345,7 @@ const AchievementsPage = () => {
                         </div>
 
                         <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
-                            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-8">{activeTest.questions[currentQuestionIndex].q}</h3>
+                            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-8">{activeTest.questions[currentQuestionIndex].text}</h3>
                             <div className="space-y-3">
                                 {activeTest.questions[currentQuestionIndex].options.map((opt, idx) => (
                                     <button
@@ -227,7 +387,7 @@ const AchievementsPage = () => {
                     </div>
                 )}
 
-                {view === 'result' && (
+                {view === 'result' && scoreData && (
                     <div className="max-w-md mx-auto text-center pt-10 animate-in zoom-in duration-500">
                         <div className="inline-block p-6 rounded-full bg-yellow-100 dark:bg-yellow-900/30 mb-6 relative">
                             <Trophy className="w-16 h-16 text-yellow-500" />
@@ -240,24 +400,18 @@ const AchievementsPage = () => {
 
                         <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl border border-gray-100 dark:border-gray-700 mb-8">
                             <div className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-widest font-semibold mb-2">Your Score</div>
-                            <div className="text-6xl font-black text-purple-600 dark:text-purple-400 mb-4">{score}%</div>
+                            <div className="text-6xl font-black text-purple-600 dark:text-purple-400 mb-4">{scoreData.score}%</div>
                             <div className="inline-flex items-center gap-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full text-sm font-bold">
-                                +{score * 10} XP Earned
+                                +{scoreData.xp} XP Earned
                             </div>
                         </div>
 
                         <div className="flex flex-col gap-3">
                             <button
-                                onClick={() => setView('list')} // Back to list
+                                onClick={() => setView('list')}
                                 className="w-full py-4 bg-gray-900 dark:bg-white dark:text-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-gray-100 transition shadow-lg"
                             >
                                 Back to Achievements
-                            </button>
-                            <button
-                                onClick={() => startTest(activeTest)} // Retry
-                                className="w-full py-4 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-                            >
-                                Retry Test
                             </button>
                         </div>
                     </div>
