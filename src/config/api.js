@@ -1,5 +1,7 @@
 // API Configuration
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Ensure the URL always ends with /api (without a trailing slash after it)
+export const API_URL = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl.replace(/\/$/, '')}/api`;
 
 // Helper function to get auth token from localStorage
 export const getAuthToken = () => {
@@ -19,7 +21,7 @@ export const removeAuthToken = () => {
 // Base fetch function with auth headers
 export const apiRequest = async (endpoint, options = {}) => {
   const token = getAuthToken();
-  
+
   const config = {
     headers: {
       'Content-Type': 'application/json',

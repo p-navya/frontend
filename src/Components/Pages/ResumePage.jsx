@@ -43,9 +43,14 @@ const ResumePage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col font-sans transition-colors duration-300">
+        <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] text-gray-800 dark:text-gray-200 font-sans transition-all duration-500 relative overflow-hidden">
+            {/* Background Orbs */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-5%] right-[-5%] w-[35%] h-[35%] bg-teal-400/10 dark:bg-teal-600/5 blur-[100px] rounded-full animate-pulse" />
+                <div className="absolute bottom-[-5%] left-[-5%] w-[35%] h-[35%] bg-blue-400/10 dark:bg-blue-600/5 blur-[100px] rounded-full animate-pulse [animation-delay:3s]" />
+            </div>
             {/* Header */}
-            <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
+            <header className="bg-white/40 dark:bg-black/40 backdrop-blur-xl border-b border-white/20 dark:border-white/5 sticky top-0 z-30">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <button onClick={() => navigate('/dashboard')} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition">

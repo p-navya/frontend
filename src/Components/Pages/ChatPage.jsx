@@ -232,11 +232,16 @@ const ChatPage = () => {
     };
 
     return (
-        <div className="flex h-screen bg-white dark:bg-[#0d0d0d] text-gray-800 dark:text-gray-200 font-sans overflow-hidden transition-all duration-500">
+        <div className="relative flex h-screen bg-white dark:bg-[#0d0d0d] text-gray-800 dark:text-gray-200 font-sans overflow-hidden transition-all duration-500">
+            {/* Background Orbs */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-400/10 dark:bg-blue-600/5 blur-[120px] rounded-full animate-pulse" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-400/10 dark:bg-purple-600/5 blur-[120px] rounded-full animate-pulse [animation-delay:2s]" />
+            </div>
 
             <div className="flex-1 flex flex-col relative w-full overflow-hidden">
                 {/* Header */}
-                <div className="h-20 flex items-center justify-between px-6 z-20 border-b border-gray-100 dark:border-white/5">
+                <div className="h-20 flex items-center justify-between px-6 z-30 border-b border-white/20 dark:border-white/5 bg-white/40 dark:bg-black/40 backdrop-blur-xl sticky top-0">
                     <div className="flex items-center gap-4">
                         <button
                             onClick={() => navigate('/dashboard')}
