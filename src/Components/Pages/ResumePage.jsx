@@ -259,12 +259,46 @@ const ResumePage = () => {
         setIsGenerating(true);
         const element = resumeRef.current;
 
+        // Validate element exists
+        if (!element) {
+            alert('Resume preview not found. Please ensure you are on the preview page.');
+            setIsGenerating(false);
+            return;
+        }
+
         try {
+            // Wait a bit to ensure all images and fonts are loaded
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Preload images to avoid CORS issues
+            const images = element.querySelectorAll('img');
+            await Promise.all(Array.from(images).map(img => {
+                return new Promise((resolve) => {
+                    if (img.complete) {
+                        resolve();
+                    } else {
+                        img.onload = resolve;
+                        img.onerror = () => {
+                            // If image fails to load, replace with placeholder or continue
+                            console.warn('Image failed to load:', img.src);
+                            resolve();
+                        };
+                        // Timeout after 3 seconds
+                        setTimeout(resolve, 3000);
+                    }
+                });
+            }));
+
             const canvas = await html2canvas(element, {
-                scale: 2, // Scale 2 is safer and high enough quality
+                scale: 2,
                 useCORS: true,
-                logging: true,
+                allowTaint: false,
+                logging: false,
                 backgroundColor: '#ffffff',
+                width: element.scrollWidth,
+                height: element.scrollHeight,
+                windowWidth: element.scrollWidth,
+                windowHeight: element.scrollHeight,
                 onclone: (clonedDoc) => {
                     // Inject a high-compatibility PDF stylesheet
                     const style = clonedDoc.createElement('style');
@@ -300,24 +334,86 @@ const ResumePage = () => {
                             el.setAttribute('style', styleVal.replace(/oklch\([^)]+?\)/g, 'rgb(31, 41, 55)'));
                         }
                     });
+
+                    // Ensure all images have proper loading
+                    clonedDoc.querySelectorAll('img').forEach(img => {
+                        if (!img.complete || img.naturalWidth === 0) {
+                            // Replace broken images with a placeholder or remove
+                            img.style.display = 'none';
+                        }
+                    });
                 }
             });
 
+            // Validate canvas was created successfully
+            if (!canvas || canvas.width === 0 || canvas.height === 0) {
+                throw new Error('Failed to capture resume content. Canvas is empty.');
+            }
+
             const imgData = canvas.toDataURL('image/png', 1.0);
+            
+            // Validate image data
+            if (!imgData || imgData === 'data:,') {
+                throw new Error('Failed to convert canvas to image data.');
+            }
+
             const pdf = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
-                format: 'a4'
+                format: 'a4',
+                compress: true
             });
 
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = pdf.internal.pageSize.getHeight();
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            
+            // Calculate dimensions to fit A4 page width (210mm)
+            // Convert pixels to mm (assuming 96 DPI: 1px ≈ 0.264583mm)
+            const pxToMm = 0.264583;
+            const imgWidthMm = imgWidth * pxToMm;
+            const imgHeightMm = imgHeight * pxToMm;
+            
+            // Scale to fit width, maintain aspect ratio
+            const scale = pdfWidth / imgWidthMm;
+            const scaledWidth = pdfWidth;
+            const scaledHeight = imgHeightMm * scale;
 
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`${formData.fullName.replace(/\s+/g, '_')}_Resume.pdf`);
+            // Handle multi-page if content is taller than one page
+            if (scaledHeight > pdfHeight) {
+                const totalPages = Math.ceil(scaledHeight / pdfHeight);
+                
+                for (let i = 0; i < totalPages; i++) {
+                    if (i > 0) {
+                        pdf.addPage();
+                    }
+                    
+                    // Calculate the y position for this page
+                    const yPosition = -(i * pdfHeight);
+                    
+                    // Add image starting at yPosition (negative to show the correct portion)
+                    pdf.addImage(
+                        imgData,
+                        'PNG',
+                        0,
+                        yPosition,
+                        scaledWidth,
+                        scaledHeight
+                    );
+                }
+            } else {
+                // Single page - center vertically
+                const yOffset = (pdfHeight - scaledHeight) / 2;
+                pdf.addImage(imgData, 'PNG', 0, yOffset, scaledWidth, scaledHeight);
+            }
+
+            const fileName = formData.fullName ? `${formData.fullName.replace(/\s+/g, '_')}_Resume.pdf` : 'Resume.pdf';
+            pdf.save(fileName);
         } catch (error) {
             console.error('PDF Generation Error:', error);
-            alert('Failed to generate PDF. We are optimizing the generator. Try again or use a different template.');
+            const errorMessage = error.message || 'Unknown error occurred';
+            alert(`Failed to generate PDF: ${errorMessage}. Please try again or use a different template.`);
         } finally {
             setIsGenerating(false);
         }
