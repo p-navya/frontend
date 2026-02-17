@@ -266,6 +266,10 @@ const ResumePage = () => {
             return;
         }
 
+        // Store original styles for restoration
+        const originalDisplay = element.style.display || '';
+        const originalVisibility = element.style.visibility || '';
+
         try {
             // Wait a bit to ensure all images and fonts are loaded
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -386,16 +390,35 @@ const ResumePage = () => {
             await new Promise(resolve => setTimeout(resolve, 200));
             element.offsetHeight; // Force another reflow after styles are injected
 
+            // Ensure element is visible and properly sized before capture
+            // Force the element to be visible and ensure it's rendered at full size
+            element.style.display = 'block';
+            element.style.visibility = 'visible';
+            
+            // Wait for layout to settle
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            const elementRect = element.getBoundingClientRect();
+            // Use the actual rendered size, but ensure we capture the full width
+            // The element should be 210mm = ~794px at 96 DPI
+            const elementWidth = element.scrollWidth || elementRect.width || 794;
+            const elementHeight = element.scrollHeight || elementRect.height;
+            
+            // At 96 DPI: 210mm = 794px, so at scale 2 it should be ~1588px
             const canvas = await html2canvas(element, {
                 scale: 2,
                 useCORS: true,
                 allowTaint: false,
                 logging: false,
                 backgroundColor: '#ffffff',
-                width: element.scrollWidth,
-                height: element.scrollHeight,
-                windowWidth: element.scrollWidth,
-                windowHeight: element.scrollHeight,
+                width: elementWidth,
+                height: elementHeight,
+                windowWidth: elementWidth,
+                windowHeight: elementHeight,
+                x: 0,
+                y: 0,
+                scrollX: 0,
+                scrollY: 0,
                 foreignObjectRendering: false, // Disable to avoid parsing issues with modern CSS
                 onclone: (clonedDoc) => {
                     // Function to replace oklch colors with RGB equivalents
@@ -628,14 +651,30 @@ const ResumePage = () => {
             const imgWidth = canvas.width;
             const imgHeight = canvas.height;
             
-            // Calculate scaling to fit PDF width exactly (210mm)
-            // The resume element is 210mm wide, so scale canvas to match PDF width
+            // Calculate scaling: element is 210mm wide
+            // At 96 DPI: 210mm = 794px
+            // With scale 2: canvas should be ~1588px wide
+            // But we'll calculate based on actual canvas dimensions
+            
+            // Calculate mm per pixel: PDF is 210mm wide, canvas is imgWidth pixels
+            // This gives us the correct scaling factor
             const mmPerPixel = pdfWidth / imgWidth;
             const imgHeightMm = imgHeight * mmPerPixel;
             
             // Scale to fit PDF width exactly (210mm) - maintain aspect ratio
             const scaledWidth = pdfWidth;
             const scaledHeight = imgHeightMm;
+            
+            // Debug logging (remove in production if needed)
+            console.log('PDF Generation:', {
+                elementWidth: elementWidth,
+                elementHeight: elementHeight,
+                canvasWidth: imgWidth,
+                canvasHeight: imgHeight,
+                pdfWidth: pdfWidth,
+                scaledWidth: scaledWidth,
+                scaledHeight: scaledHeight
+            });
 
             // Only split into multiple pages if content is significantly taller than one page
             // Use a larger buffer to avoid unnecessary page breaks for single-page resumes
@@ -685,6 +724,10 @@ const ResumePage = () => {
                 pdf.addImage(imgData, 'PNG', 0, 0, scaledWidth, scaledHeight);
             }
 
+            // Restore original element styles
+            element.style.display = originalDisplay;
+            element.style.visibility = originalVisibility;
+
             const fileName = formData.fullName ? `${formData.fullName.replace(/\s+/g, '_')}_Resume.pdf` : 'Resume.pdf';
             pdf.save(fileName);
         } catch (error) {
@@ -692,6 +735,11 @@ const ResumePage = () => {
             const errorMessage = error.message || 'Unknown error occurred';
             alert(`Failed to generate PDF: ${errorMessage}. Please try again or use a different template.`);
         } finally {
+            // Restore element styles in case of error
+            if (element) {
+                element.style.display = originalDisplay || '';
+                element.style.visibility = originalVisibility || '';
+            }
             // Remove the override style element
             const overrideStyleElement = document.getElementById('pdf-oklch-override-temp');
             if (overrideStyleElement) {
