@@ -289,6 +289,18 @@ const ResumePage = () => {
                 });
             }));
 
+            // Force a reflow to ensure all styles are computed (important for production builds)
+            element.offsetHeight; // Trigger reflow
+            
+            // Explicitly set blue separator lines with inline styles to ensure they render in production
+            const blueLines = element.querySelectorAll('.bg-blue-800, [class*="bg-blue-800"]');
+            blueLines.forEach((line) => {
+                line.style.backgroundColor = 'rgb(30, 64, 175)';
+                line.style.height = '1px';
+                line.style.width = '100%';
+                line.style.display = 'block';
+            });
+
             // Convert computed styles to RGB to avoid oklch parsing
             // Process elements and convert any oklch colors to RGB inline styles
             const allElements = element.querySelectorAll('*');
@@ -313,6 +325,8 @@ const ResumePage = () => {
                             const isBlueLine = el.classList.contains('bg-blue-800') || 
                                              el.classList.toString().includes('bg-blue');
                             if (isBlueLine && css === 'background-color') {
+                                // Ensure blue lines are explicitly set
+                                el.style.backgroundColor = 'rgb(30, 64, 175)';
                                 return; // Don't override blue lines
                             }
                             
@@ -357,14 +371,20 @@ const ResumePage = () => {
                     /* Preserve blue separator lines - these are important! */
                     #resume-document .bg-blue-800,
                     #resume-document [class*="bg-blue-800"],
-                    #resume-document div[class*="bg-blue"] {
+                    #resume-document div[class*="bg-blue"],
+                    #resume-document div.bg-blue-800 {
                         background-color: rgb(30, 64, 175) !important;
+                        height: 1px !important;
+                        width: 100% !important;
+                        display: block !important;
                     }
                 `;
                 document.head.insertBefore(overrideStyleElement, document.head.firstChild);
-                // Wait for styles to be applied
-                await new Promise(resolve => setTimeout(resolve, 100));
             }
+            
+            // Wait longer in production for styles to fully apply and force another reflow
+            await new Promise(resolve => setTimeout(resolve, 200));
+            element.offsetHeight; // Force another reflow after styles are injected
 
             const canvas = await html2canvas(element, {
                 scale: 2,
@@ -545,6 +565,13 @@ const ResumePage = () => {
                                     colorProps.forEach(prop => {
                                         const value = computedStyle.getPropertyValue(prop);
                                         if (value && (value.includes('oklch') || value.includes('OKLCH'))) {
+                                            // Skip blue separator lines - preserve them!
+                                            const isBlueLine = el.classList.contains('bg-blue-800') || 
+                                                             el.classList.toString().includes('bg-blue');
+                                            if (isBlueLine && prop === 'backgroundColor') {
+                                                el.style.setProperty('backgroundColor', 'rgb(30, 64, 175)', 'important');
+                                                return;
+                                            }
                                             el.style.setProperty(prop, 'rgb(107, 114, 128)', 'important');
                                         }
                                     });
@@ -563,6 +590,16 @@ const ResumePage = () => {
                             // Replace broken images with a placeholder or remove
                             img.style.display = 'none';
                         }
+                    });
+
+                    // Explicitly set blue separator lines in cloned document (critical for production)
+                    const clonedBlueLines = clonedDoc.querySelectorAll('.bg-blue-800, [class*="bg-blue-800"], div[class*="bg-blue"]');
+                    clonedBlueLines.forEach((line) => {
+                        line.style.backgroundColor = 'rgb(30, 64, 175)';
+                        line.style.height = '1px';
+                        line.style.width = '100%';
+                        line.style.display = 'block';
+                        line.style.marginBottom = '8px';
                     });
                 }
             });
