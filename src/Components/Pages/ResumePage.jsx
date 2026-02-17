@@ -289,6 +289,34 @@ const ResumePage = () => {
                 });
             }));
 
+            // Process stylesheets to remove oklch before html2canvas parses them
+            const styleSheets = Array.from(document.styleSheets);
+            const oklchReplacements = [];
+            styleSheets.forEach((sheet) => {
+                try {
+                    const rules = Array.from(sheet.cssRules || []);
+                    rules.forEach((rule) => {
+                        if (rule.style && rule.cssText) {
+                            const cssText = rule.cssText;
+                            if (cssText && (cssText.includes('oklch') || cssText.includes('OKLCH'))) {
+                                // Try to replace oklch in the rule
+                                try {
+                                    const newCssText = cssText.replace(/oklch\s*\([^()]*(?:\([^()]*\)[^()]*)*\)/gi, 'rgb(107, 114, 128)');
+                                    if (newCssText !== cssText) {
+                                        oklchReplacements.push({ rule, originalText: cssText });
+                                        // Note: We can't directly modify cssRules, but html2canvas will use the cloned doc
+                                    }
+                                } catch {
+                                    // Ignore errors in processing
+                                }
+                            }
+                        }
+                    });
+                } catch {
+                    // Cross-origin stylesheets can't be accessed, skip them
+                }
+            });
+
             const canvas = await html2canvas(element, {
                 scale: 2,
                 useCORS: true,
@@ -299,7 +327,34 @@ const ResumePage = () => {
                 height: element.scrollHeight,
                 windowWidth: element.scrollWidth,
                 windowHeight: element.scrollHeight,
+                foreignObjectRendering: false, // Disable to avoid parsing issues with modern CSS
                 onclone: (clonedDoc) => {
+                    // Function to replace oklch colors with RGB equivalents
+                    const replaceOklch = (text) => {
+                        if (!text || typeof text !== 'string') return text;
+                        // More comprehensive regex that handles nested parentheses and various formats
+                        // Match oklch( with any content inside, handling nested parentheses
+                        let result = text;
+                        let changed = true;
+                        let iterations = 0;
+                        const maxIterations = 10; // Prevent infinite loops
+                        
+                        while (changed && iterations < maxIterations) {
+                            const before = result;
+                            // Match oklch( followed by content that may include nested parentheses
+                            result = result.replace(/oklch\s*\([^()]*(?:\([^()]*\)[^()]*)*\)/gi, () => {
+                                return 'rgb(107, 114, 128)'; // Safe fallback color
+                            });
+                            changed = (before !== result);
+                            iterations++;
+                        }
+                        
+                        // Also handle any remaining oklch references with a simpler pattern
+                        result = result.replace(/oklch[^;)]*/gi, 'rgb(107, 114, 128)');
+                        
+                        return result;
+                    };
+
                     // Inject a high-compatibility PDF stylesheet
                     const style = clonedDoc.createElement('style');
                     style.innerHTML = `
@@ -313,25 +368,94 @@ const ResumePage = () => {
                     `;
                     clonedDoc.head.appendChild(style);
 
-                    // Aggressive but safe cleanup of modern CSS functions that crash html2canvas
+                    // Process all stylesheets in the cloned document
+                    try {
+                        const clonedStyleSheets = Array.from(clonedDoc.styleSheets || []);
+                        clonedStyleSheets.forEach((sheet) => {
+                            try {
+                                const rules = Array.from(sheet.cssRules || []);
+                                rules.forEach((rule) => {
+                                    if (rule.style) {
+                                        // Check and replace oklch in individual style properties
+                                        const styleProps = ['color', 'background-color', 'border-color', 
+                                                           'border-top-color', 'border-right-color', 
+                                                           'border-bottom-color', 'border-left-color'];
+                                        styleProps.forEach(prop => {
+                                            try {
+                                                const value = rule.style.getPropertyValue(prop);
+                                                if (value && (value.includes('oklch') || value.includes('OKLCH'))) {
+                                                    rule.style.setProperty(prop, 'rgb(107, 114, 128)', 'important');
+                                                }
+                                            } catch {
+                                                // Ignore property access errors
+                                            }
+                                        });
+                                    }
+                                });
+                            } catch {
+                                // Ignore stylesheet access errors (cross-origin, etc.)
+                            }
+                        });
+                    } catch {
+                        // Ignore if styleSheets can't be accessed
+                    }
+
+                    // Aggressive cleanup of modern CSS functions that crash html2canvas
                     const styles = clonedDoc.getElementsByTagName('style');
                     for (let i = 0; i < styles.length; i++) {
                         try {
-                            const content = styles[i].innerHTML;
-                            if (content.includes('oklch')) {
-                                // Replace all oklch function calls with a safe fallback
-                                styles[i].innerHTML = content.replace(/oklch\([^)]+?\)/g, 'rgb(31, 41, 55)');
+                            let content = styles[i].innerHTML || styles[i].textContent || '';
+                            if (content.includes('oklch') || content.includes('OKLCH')) {
+                                content = replaceOklch(content);
+                                // Also remove other modern color functions
+                                content = content.replace(/color-mix\([^)]+\)/gi, 'rgb(107, 114, 128)');
+                                content = content.replace(/lab\([^)]+\)/gi, 'rgb(107, 114, 128)');
+                                content = content.replace(/lch\([^)]+\)/gi, 'rgb(107, 114, 128)');
+                                styles[i].innerHTML = content;
                             }
                         } catch {
-                            styles[i].innerHTML = ''; // Clear if it's corrupting the parser
+                            // If style is corrupting, try to clear it
+                            try {
+                                styles[i].innerHTML = '';
+                            } catch {
+                                // If we can't clear it, remove the style tag
+                                styles[i].parentNode?.removeChild(styles[i]);
+                            }
                         }
                     }
 
-                    // Strip oklch from inline styles
-                    clonedDoc.querySelectorAll('[style*="oklch"]').forEach(el => {
-                        const styleVal = el.getAttribute('style');
-                        if (styleVal) {
-                            el.setAttribute('style', styleVal.replace(/oklch\([^)]+?\)/g, 'rgb(31, 41, 55)'));
+                    // Strip oklch from inline styles and computed styles
+                    const allElements = clonedDoc.querySelectorAll('*');
+                    allElements.forEach(el => {
+                        try {
+                            // Handle inline style attribute
+                            const styleAttr = el.getAttribute('style');
+                            if (styleAttr && (styleAttr.includes('oklch') || styleAttr.includes('OKLCH'))) {
+                                let newStyle = replaceOklch(styleAttr);
+                                // Remove any remaining oklch references
+                                newStyle = newStyle.replace(/oklch\([^)]+\)/gi, 'rgb(107, 114, 128)');
+                                el.setAttribute('style', newStyle);
+                            }
+
+                            // Handle computed styles that might have oklch
+                            try {
+                                const computedStyle = clonedDoc.defaultView?.getComputedStyle(el);
+                                if (computedStyle) {
+                                    const colorProps = ['color', 'backgroundColor', 'borderColor', 'borderTopColor', 
+                                                      'borderRightColor', 'borderBottomColor', 'borderLeftColor',
+                                                      'outlineColor', 'textDecorationColor'];
+                                    colorProps.forEach(prop => {
+                                        const value = computedStyle.getPropertyValue(prop);
+                                        if (value && (value.includes('oklch') || value.includes('OKLCH'))) {
+                                            el.style.setProperty(prop, 'rgb(107, 114, 128)', 'important');
+                                        }
+                                    });
+                                }
+                            } catch {
+                                // Ignore computed style errors
+                            }
+                        } catch {
+                            // Continue if element can't be processed
                         }
                     });
 
