@@ -309,6 +309,13 @@ const ResumePage = () => {
                     colorProps.forEach(({ css, js }) => {
                         const value = computedStyle.getPropertyValue(css);
                         if (value && (value.toLowerCase().includes('oklch'))) {
+                            // Skip blue separator lines - preserve them!
+                            const isBlueLine = el.classList.contains('bg-blue-800') || 
+                                             el.classList.toString().includes('bg-blue');
+                            if (isBlueLine && css === 'background-color') {
+                                return; // Don't override blue lines
+                            }
+                            
                             // Store original if not already stored
                             if (!styleBackups.has(el)) {
                                 styleBackups.set(el, {});
@@ -339,18 +346,19 @@ const ResumePage = () => {
                 overrideStyleElement = document.createElement('style');
                 overrideStyleElement.id = overrideStyleId;
                 overrideStyleElement.innerHTML = `
-                    /* Override all oklch colors with safe RGB values */
-                    * {
-                        color: rgb(0, 0, 0) !important;
-                        background-color: rgb(255, 255, 255) !important;
-                        border-color: rgb(229, 231, 235) !important;
-                    }
+                    /* Override oklch colors but preserve important elements */
                     #resume-document {
                         background-color: rgb(255, 255, 255) !important;
                         color: rgb(0, 0, 0) !important;
                     }
                     #resume-document a {
                         color: rgb(30, 64, 175) !important;
+                    }
+                    /* Preserve blue separator lines - these are important! */
+                    #resume-document .bg-blue-800,
+                    #resume-document [class*="bg-blue-800"],
+                    #resume-document div[class*="bg-blue"] {
+                        background-color: rgb(30, 64, 175) !important;
                     }
                 `;
                 document.head.insertBefore(overrideStyleElement, document.head.firstChild);
@@ -414,7 +422,16 @@ const ResumePage = () => {
                             color-scheme: light !important; 
                             -webkit-print-color-adjust: exact !important;
                             color-adjust: exact !important;
+                            print-color-adjust: exact !important;
                             font-display: block !important;
+                        }
+                        /* Preserve blue separator lines */
+                        #resume-document .bg-blue-800,
+                        #resume-document [class*="bg-blue-800"] {
+                            background-color: rgb(30, 64, 175) !important;
+                            -webkit-print-color-adjust: exact !important;
+                            color-adjust: exact !important;
+                            print-color-adjust: exact !important;
                         }
                     `;
                     clonedDoc.head.appendChild(style);
@@ -569,24 +586,23 @@ const ResumePage = () => {
                 compress: true
             });
 
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+            const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
             const imgWidth = canvas.width;
             const imgHeight = canvas.height;
             
-            // Calculate dimensions to fit A4 page width (210mm)
-            // Convert pixels to mm (assuming 96 DPI: 1px ≈ 0.264583mm)
-            const pxToMm = 0.264583;
-            const imgWidthMm = imgWidth * pxToMm;
-            const imgHeightMm = imgHeight * pxToMm;
+            // Calculate scaling to fit PDF width exactly (210mm)
+            // The resume element is 210mm wide, so scale canvas to match PDF width
+            const mmPerPixel = pdfWidth / imgWidth;
+            const imgHeightMm = imgHeight * mmPerPixel;
             
-            // Scale to fit width, maintain aspect ratio
-            const scale = pdfWidth / imgWidthMm;
+            // Scale to fit PDF width exactly (210mm) - maintain aspect ratio
             const scaledWidth = pdfWidth;
-            const scaledHeight = imgHeightMm * scale;
+            const scaledHeight = imgHeightMm;
 
-            // Handle multi-page if content is taller than one page
-            if (scaledHeight > pdfHeight) {
+            // Only split into multiple pages if content is significantly taller than one page
+            // Use a larger buffer to avoid unnecessary page breaks for single-page resumes
+            if (scaledHeight > pdfHeight + 10) {
                 const totalPages = Math.ceil(scaledHeight / pdfHeight);
                 
                 for (let i = 0; i < totalPages; i++) {
@@ -594,23 +610,42 @@ const ResumePage = () => {
                         pdf.addPage();
                     }
                     
-                    // Calculate the y position for this page
-                    const yPosition = -(i * pdfHeight);
+                    // Calculate which portion of the image to show on this page
+                    const pageStartY = (i * pdfHeight) / mmPerPixel;
+                    const pageEndY = Math.min((i + 1) * pdfHeight / mmPerPixel, imgHeight);
+                    const pageHeightPx = pageEndY - pageStartY;
                     
-                    // Add image starting at yPosition (negative to show the correct portion)
+                    // Create a temporary canvas for this page slice
+                    const pageCanvas = document.createElement('canvas');
+                    pageCanvas.width = imgWidth;
+                    pageCanvas.height = Math.ceil(pageHeightPx);
+                    const ctx = pageCanvas.getContext('2d');
+                    
+                    // Draw the portion of the image for this page
+                    ctx.drawImage(
+                        canvas,
+                        0, Math.floor(pageStartY), // Source x, y
+                        imgWidth, pageHeightPx, // Source width, height
+                        0, 0, // Destination x, y
+                        imgWidth, pageHeightPx // Destination width, height
+                    );
+                    
+                    const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
+                    const pageHeightMm = pageHeightPx * mmPerPixel;
+                    
+                    // Add image for this page at exact position (0,0) to preserve alignment
                     pdf.addImage(
-                        imgData,
+                        pageImgData,
                         'PNG',
                         0,
-                        yPosition,
+                        0,
                         scaledWidth,
-                        scaledHeight
+                        Math.min(pageHeightMm, pdfHeight)
                     );
                 }
             } else {
-                // Single page - center vertically
-                const yOffset = (pdfHeight - scaledHeight) / 2;
-                pdf.addImage(imgData, 'PNG', 0, yOffset, scaledWidth, scaledHeight);
+                // Single page - add image at top-left corner (0,0) to preserve exact alignment
+                pdf.addImage(imgData, 'PNG', 0, 0, scaledWidth, scaledHeight);
             }
 
             const fileName = formData.fullName ? `${formData.fullName.replace(/\s+/g, '_')}_Resume.pdf` : 'Resume.pdf';
