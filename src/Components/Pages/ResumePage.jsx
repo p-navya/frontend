@@ -289,33 +289,74 @@ const ResumePage = () => {
                 });
             }));
 
-            // Process stylesheets to remove oklch before html2canvas parses them
-            const styleSheets = Array.from(document.styleSheets);
-            const oklchReplacements = [];
-            styleSheets.forEach((sheet) => {
+            // Convert computed styles to RGB to avoid oklch parsing
+            // Process elements and convert any oklch colors to RGB inline styles
+            const allElements = element.querySelectorAll('*');
+            const styleBackups = new Map();
+            allElements.forEach((el) => {
                 try {
-                    const rules = Array.from(sheet.cssRules || []);
-                    rules.forEach((rule) => {
-                        if (rule.style && rule.cssText) {
-                            const cssText = rule.cssText;
-                            if (cssText && (cssText.includes('oklch') || cssText.includes('OKLCH'))) {
-                                // Try to replace oklch in the rule
-                                try {
-                                    const newCssText = cssText.replace(/oklch\s*\([^()]*(?:\([^()]*\)[^()]*)*\)/gi, 'rgb(107, 114, 128)');
-                                    if (newCssText !== cssText) {
-                                        oklchReplacements.push({ rule, originalText: cssText });
-                                        // Note: We can't directly modify cssRules, but html2canvas will use the cloned doc
-                                    }
-                                } catch {
-                                    // Ignore errors in processing
-                                }
+                    const computedStyle = window.getComputedStyle(el);
+                    const colorProps = [
+                        { css: 'color', js: 'color' },
+                        { css: 'background-color', js: 'backgroundColor' },
+                        { css: 'border-color', js: 'borderColor' },
+                        { css: 'border-top-color', js: 'borderTopColor' },
+                        { css: 'border-right-color', js: 'borderRightColor' },
+                        { css: 'border-bottom-color', js: 'borderBottomColor' },
+                        { css: 'border-left-color', js: 'borderLeftColor' }
+                    ];
+                    
+                    colorProps.forEach(({ css, js }) => {
+                        const value = computedStyle.getPropertyValue(css);
+                        if (value && (value.toLowerCase().includes('oklch'))) {
+                            // Store original if not already stored
+                            if (!styleBackups.has(el)) {
+                                styleBackups.set(el, {});
+                            }
+                            if (!styleBackups.get(el)[js]) {
+                                styleBackups.get(el)[js] = el.style[js] || '';
+                            }
+                            
+                            // Convert to RGB based on property type
+                            if (css === 'background-color') {
+                                el.style.backgroundColor = 'rgb(255, 255, 255)';
+                            } else if (css === 'color') {
+                                el.style.color = 'rgb(0, 0, 0)';
+                            } else {
+                                el.style[js] = 'rgb(229, 231, 235)';
                             }
                         }
                     });
                 } catch {
-                    // Cross-origin stylesheets can't be accessed, skip them
+                    // Ignore errors
                 }
             });
+
+            // Inject a global style override as additional protection
+            const overrideStyleId = 'pdf-oklch-override-temp';
+            let overrideStyleElement = document.getElementById(overrideStyleId);
+            if (!overrideStyleElement) {
+                overrideStyleElement = document.createElement('style');
+                overrideStyleElement.id = overrideStyleId;
+                overrideStyleElement.innerHTML = `
+                    /* Override all oklch colors with safe RGB values */
+                    * {
+                        color: rgb(0, 0, 0) !important;
+                        background-color: rgb(255, 255, 255) !important;
+                        border-color: rgb(229, 231, 235) !important;
+                    }
+                    #resume-document {
+                        background-color: rgb(255, 255, 255) !important;
+                        color: rgb(0, 0, 0) !important;
+                    }
+                    #resume-document a {
+                        color: rgb(30, 64, 175) !important;
+                    }
+                `;
+                document.head.insertBefore(overrideStyleElement, document.head.firstChild);
+                // Wait for styles to be applied
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
 
             const canvas = await html2canvas(element, {
                 scale: 2,
@@ -355,6 +396,16 @@ const ResumePage = () => {
                         return result;
                     };
 
+                    // Remove all external stylesheet links that might contain oklch
+                    const linkTags = clonedDoc.querySelectorAll('link[rel="stylesheet"]');
+                    linkTags.forEach(link => {
+                        try {
+                            link.remove();
+                        } catch {
+                            // Ignore removal errors
+                        }
+                    });
+
                     // Inject a high-compatibility PDF stylesheet
                     const style = clonedDoc.createElement('style');
                     style.innerHTML = `
@@ -368,30 +419,60 @@ const ResumePage = () => {
                     `;
                     clonedDoc.head.appendChild(style);
 
-                    // Process all stylesheets in the cloned document
+                    // Process all stylesheets in the cloned document - remove rules with oklch
                     try {
                         const clonedStyleSheets = Array.from(clonedDoc.styleSheets || []);
                         clonedStyleSheets.forEach((sheet) => {
                             try {
                                 const rules = Array.from(sheet.cssRules || []);
-                                rules.forEach((rule) => {
-                                    if (rule.style) {
-                                        // Check and replace oklch in individual style properties
-                                        const styleProps = ['color', 'background-color', 'border-color', 
-                                                           'border-top-color', 'border-right-color', 
-                                                           'border-bottom-color', 'border-left-color'];
-                                        styleProps.forEach(prop => {
+                                // Process rules in reverse to safely remove them
+                                for (let i = rules.length - 1; i >= 0; i--) {
+                                    const rule = rules[i];
+                                    try {
+                                        const cssText = rule.cssText || '';
+                                        if (cssText.includes('oklch') || cssText.includes('OKLCH')) {
+                                            // Try to remove the rule
                                             try {
-                                                const value = rule.style.getPropertyValue(prop);
-                                                if (value && (value.includes('oklch') || value.includes('OKLCH'))) {
-                                                    rule.style.setProperty(prop, 'rgb(107, 114, 128)', 'important');
-                                                }
+                                                sheet.deleteRule(i);
                                             } catch {
-                                                // Ignore property access errors
+                                                // If we can't delete, try to modify it
+                                                if (rule.style) {
+                                                    const styleProps = ['color', 'background-color', 'border-color', 
+                                                                       'border-top-color', 'border-right-color', 
+                                                                       'border-bottom-color', 'border-left-color',
+                                                                       'outline-color', 'text-decoration-color'];
+                                                    styleProps.forEach(prop => {
+                                                        try {
+                                                            const value = rule.style.getPropertyValue(prop);
+                                                            if (value && (value.includes('oklch') || value.includes('OKLCH'))) {
+                                                                rule.style.removeProperty(prop);
+                                                            }
+                                                        } catch {
+                                                            // Ignore property access errors
+                                                        }
+                                                    });
+                                                }
                                             }
-                                        });
+                                        } else if (rule.style) {
+                                            // Check and replace oklch in individual style properties
+                                            const styleProps = ['color', 'background-color', 'border-color', 
+                                                               'border-top-color', 'border-right-color', 
+                                                               'border-bottom-color', 'border-left-color'];
+                                            styleProps.forEach(prop => {
+                                                try {
+                                                    const value = rule.style.getPropertyValue(prop);
+                                                    if (value && (value.includes('oklch') || value.includes('OKLCH'))) {
+                                                        rule.style.setProperty(prop, 'rgb(107, 114, 128)', 'important');
+                                                    }
+                                                } catch {
+                                                    // Ignore property access errors
+                                                }
+                                            });
+                                        }
+                                    } catch {
+                                        // Ignore rule processing errors
                                     }
-                                });
+                                }
                             } catch {
                                 // Ignore stylesheet access errors (cross-origin, etc.)
                             }
@@ -539,6 +620,11 @@ const ResumePage = () => {
             const errorMessage = error.message || 'Unknown error occurred';
             alert(`Failed to generate PDF: ${errorMessage}. Please try again or use a different template.`);
         } finally {
+            // Remove the override style element
+            const overrideStyleElement = document.getElementById('pdf-oklch-override-temp');
+            if (overrideStyleElement) {
+                overrideStyleElement.remove();
+            }
             setIsGenerating(false);
         }
     };
